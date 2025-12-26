@@ -41,18 +41,25 @@ __asm
 __endasm;
 }
 
-void put_chr(int x, int y, char chr) {
+void put_chr8(int x, int y, char chr) {
+	if((x < 0) || (y < 0))
+		return;
 	vpoke(BASE_ADDRESS + x + y * 32, chr);
+}
+
+void put_chr16(int x, int y, char chr) {
+	put_chr8(x * 2, y * 2, chr);
+	put_chr8(x * 2 + 1, y * 2,  ' ');
+	put_chr8(x * 2 , y * 2 + 1,  ' ');
+	put_chr8(x * 2 + 1, y * 2 + 1,  ' ');
 }
 
 // VRAM直書き
 void print_at(int x, int y, char *str) {
 	char chr;
-	if((x < 0) || (y < 0))
-		return;
 	while ((chr = *(str++)) != '\0') {
 		if (chr < 0x20) chr = 0x20;
-			put_chr(x++, y, chr);
+			put_chr8(x++, y, chr);
 	}
 }
 
@@ -73,7 +80,7 @@ void cls(void) {
 	int i,j;
 	for(j = 0l; j < 24; j++)
 		for(i = 0; i < 32; ++i)
-			put_chr(i, j, ' ');
+			put_chr8(i, j, ' ');
 }
 
 // タイルパターン定義 (8x8)
@@ -194,10 +201,17 @@ void main() {
 			if (get_stick(0) && ((rand() % 100) < 5)) {
 				start_battle();
 			}
+			else if (get_trigger(0)) {
+				print_at(0, 23, "Give Up");
+				wait(60);
+				cls();
+				parse_map();
+				draw_background();
+				update_objects();
+			}
 		} else {
 			update_battle();
 		}
-
 		vsync();
 	}
 }
@@ -246,7 +260,7 @@ int try_move(int dx, int dy) {
 		if (can_move(gnx, gny)) {
 			gravity_x = gnx;
 			gravity_y = gny;
-			player_x = nx; player_y = ny;
+//			player_x = nx; player_y = ny;
 			return 1;
 		}
 		return 0;
@@ -260,7 +274,7 @@ int try_move(int dx, int dy) {
 			if (can_move(pnx, pny)) {
 				panels_x[i] = pnx;
 				panels_y[i] = pny;
-				player_x = nx; player_y = ny;
+//				player_x = nx; player_y = ny;
 				return 1;
 			}
 			return 0;
@@ -300,9 +314,9 @@ void draw_background() {
 	for (y = 0; y < MAP_H; y++) {
 		for (x = 0; x < MAP_W; x++) {
 			char c = levels[current_stage][y * MAP_W + x];
-			if (c == '#') put_chr(x * 2 , y, 0);
-			else if (c == 'G') put_chr(x * 2, y, 5);
-			else put_chr(x * 2, y, 1);
+			if (c == '#') put_chr16(x , y, 0);
+			else if (c == 'G') put_chr16(x, y, 5);
+			else put_chr16(x, y, 1);
 		}
 	}
 }
@@ -311,20 +325,20 @@ void update_objects() {
 	static int i;
 
 	// 前の位置を床に戻す
-	if (old_player_x >= 0) put_chr(old_player_x * 2 , old_player_y, 1);
-	if (old_gravity_x >= 0) put_chr(old_gravity_x * 2, old_gravity_y, 1);
+	if (old_player_x >= 0) put_chr16(old_player_x , old_player_y, 1);
+	if ((old_gravity_x != gravity_x) || (old_gravity_y != gravity_y)) put_chr16(old_gravity_x, old_gravity_y, 1);
 	for (i = 0; i < panel_count; i++) {
-		if (old_panels_x[i] >= 0) put_chr(old_panels_x[i] * 2, old_panels_y[i], 1);
+		if ((old_panels_x[i] != panels_x[i]) || old_panels_y[i] != panels_y[i]) put_chr16(old_panels_x[i], old_panels_y[i], 1);
 	}
 
 	// 新しい位置に描画
 	if (player_x >= 0)
-		put_chr(player_x * 2, player_y, 2);  // プレイヤー
+		put_chr16(player_x, player_y, 2);  // プレイヤー
 
-	if (gravity_x >= 0) put_chr(gravity_x * 2, gravity_y, 4);  // 重力パネル（B）
+	if (gravity_x >= 0) put_chr16(gravity_x, gravity_y, 4);  // 重力パネル（B）
 
 	for (i = 0; i < panel_count; i++) {
-		put_chr(panels_x[i] * 2, panels_y[i], 3);  // 通常パネル（S）
+		put_chr16(panels_x[i], panels_y[i], 3);  // 通常パネル（S）
 	}
 
 	// 位置保存
@@ -343,7 +357,7 @@ void start_battle() {
 	strcpy(battle_msg, "Slime appeared!");
 	cls();
 	// スライム表示（中央上部に）
-	put_chr(16, 4, 6);  // スライムキャラコード6
+	put_chr16(8, 2, 6);  // スライムキャラコード6
 	print_at(5, 8, battle_msg);
 	print_at(5, 12, "Press SPACE to attack");
 }
@@ -374,7 +388,7 @@ void update_battle() {
 			sprintf(battle_msg, "You took %d damage! HP:%d", enemy_atk, player_hp);
 			cls();
 			// スライム再描画（バトル継続時）
-			put_chr(16, 4, 6);
+			put_chr16(8, 2, 6);
 			print_at(5, 8, "Enemy defeated? No!");
 			print_at(5, 10, battle_msg);
 			print_at(5, 12, "Press SPACE to attack");
