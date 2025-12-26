@@ -1,4 +1,4 @@
-ï»¿// ds1_full.c - Dragon Sword 1 Complete Prototype (MSX1 / z88dk)
+// ds1_full.c - Dragon Sword 1 Complete Prototype (MSX1 / z88dk)
 // 2025/12/26 Compiled
 
 #include <msx.h>
@@ -7,7 +7,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "inkey.h"
+
 #define BASE_ADDRESS 0x1800
+
+enum {
+	TILE_WALL,   // •Ç
+	TILE_FLOOR,   // °
+	TILE_PLAYER,   // ƒvƒŒƒCƒ„[
+	TILE_NORMAL,   // ’Êíƒpƒlƒ‹iSj - ƒVƒ“ƒvƒ‹ƒuƒƒbƒN
+	TILE_GRAVITY,   // d—Íƒpƒlƒ‹iBj - ‰ºŒü‚«–îˆó•t‚«
+	TILE_GOAL,   // ƒS[ƒ‹
+	TILE_HOLLOW,  // Šiqó‚Ì•Ç
+	TILE_SLIME   // ƒXƒ‰ƒCƒ€
+};
+
+#define PRINT_MUL 1
 
 void copy_to_vram(char *src, char *dst, int size)
 {
@@ -54,7 +69,7 @@ void put_chr16(int x, int y, char chr) {
 	put_chr8(x * 2 + 1, y * 2 + 1,  ' ');
 }
 
-// VRAMç›´æ›¸ã
+// VRAM’¼‘‚«
 void print_at(int x, int y, char *str) {
 	char chr;
 	while ((chr = *(str++)) != '\0') {
@@ -63,7 +78,7 @@ void print_at(int x, int y, char *str) {
 	}
 }
 
-// vsync (jiffyä½¿ç”¨)
+// vsync (jiffyg—p)
 unsigned char *jiffy = (unsigned char *)0xfc9e, old_jiffy;
 void vsync(void) {
 	old_jiffy = *jiffy;
@@ -83,341 +98,70 @@ void cls(void) {
 			put_chr8(i, j, ' ');
 }
 
-// ã‚¿ã‚¤ãƒ«ãƒ‘ã‚¿ãƒ¼ãƒ³å®šç¾© (8x8)
-unsigned char tile_wall[8]	= {0xFF,0x81,0x81,0x81,0x81,0x81,0x81,0xFF};   // 0:å£
-unsigned char tile_floor[8]   = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};   // 1:åºŠ
-unsigned char tile_player[8]  = {0x18,0x3C,0x7E,0xDB,0xFF,0x66,0x66,0xFF};   // 2:ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼
-unsigned char tile_normal[8]  = {0xFF,0xFF,0xDB,0xDB,0xDB,0xDB,0xFF,0xFF};   // 3:é€šå¸¸ãƒ‘ãƒãƒ«ï¼ˆSï¼‰ - ã‚·ãƒ³ãƒ—ãƒ«ãƒ–ãƒ­ãƒƒã‚¯
-unsigned char tile_gravity[8] = {0xFF,0xFF,0xDB,0xDB,0x7E,0x3C,0x18,0xFF};   // 4:é‡åŠ›ãƒ‘ãƒãƒ«ï¼ˆBï¼‰ - ä¸‹å‘ãçŸ¢å°ä»˜ã
-unsigned char tile_goal[8]	= {0x3C,0x42,0x81,0x81,0x81,0x81,0x42,0x3C};   // 5:ã‚´ãƒ¼ãƒ«
-unsigned char tile_slime[8]   = {0x18,0x3C,0x7E,0x99,0x7E,0x3C,0x18,0x00};   // 6:ã‚¹ãƒ©ã‚¤ãƒ 
+// ƒ^ƒCƒ‹ƒpƒ^[ƒ“’è‹` (8x8)
+unsigned char tile_wall[8]	= {0xFF,0x81,0x81,0x81,0x81,0x81,0x81,0xFF};   // •Ç
+unsigned char tile_floor[8]   = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};   // °
+unsigned char tile_player[8]  = {0x18,0x3C,0x7E,0xDB,0xFF,0x66,0x66,0xFF};   // ƒvƒŒƒCƒ„[
+unsigned char tile_normal[8]  = {0xFF,0xFF,0xDB,0xDB,0xDB,0xDB,0xFF,0xFF};   // ’Êíƒpƒlƒ‹iSj - ƒVƒ“ƒvƒ‹ƒuƒƒbƒN
+unsigned char tile_gravity[8] = {0xFF,0xFF,0xDB,0xDB,0x7E,0x3C,0x18,0xFF};   // d—Íƒpƒlƒ‹iBj - ‰ºŒü‚«–îˆó•t‚«
+unsigned char tile_goal[8]	= {0x3C,0x42,0x81,0x81,0x81,0x81,0x42,0x3C};   // ƒS[ƒ‹
+unsigned char tile_hollow[8] = {0xFF,0x81,0x42,0x24,0x18,0x24,0x42,0xFF};  // Šiqó‚Ì•Ç
+unsigned char tile_slime[8]   = {0x18,0x3C,0x7E,0x99,0x7E,0x3C,0x18,0x00};   // ƒXƒ‰ƒCƒ€
+
 
 void define_tiles() {
-	copy_to_vram(tile_wall,	0x0000, 8);  // 0
-	copy_to_vram(tile_floor,   0x0008, 8);  // 1
-	copy_to_vram(tile_player,  0x0010, 8);  // 2
-	copy_to_vram(tile_normal,  0x0018, 8);  // 3:é€šå¸¸ãƒ‘ãƒãƒ«
-	copy_to_vram(tile_gravity, 0x0020, 8);  // 4:é‡åŠ›ãƒ‘ãƒãƒ«
-	copy_to_vram(tile_goal,	0x0028, 8);  // 5
-	copy_to_vram(tile_slime,   0x0030, 8);  // 6
+	copy_to_vram(tile_wall,	TILE_WALL * 8, 8); 
+	copy_to_vram(tile_floor, TILE_FLOOR * 8, 8);
+	copy_to_vram(tile_player, TILE_PLAYER * 8, 8);
+	copy_to_vram(tile_normal, TILE_NORMAL * 8, 8);	//’Êíƒpƒlƒ‹
+	copy_to_vram(tile_gravity,TILE_GRAVITY * 8, 8);	// d—Íƒpƒlƒ‹
+	copy_to_vram(tile_goal,	TILE_GOAL * 8, 8);
+	copy_to_vram(tile_slime, TILE_SLIME * 8, 8);
+	copy_to_vram(tile_hollow, TILE_HOLLOW * 8, 8);	//	:VƒuƒƒbƒN
 }
 
-// å®šæ•°
-#define MAP_W 10
-#define MAP_H 10
-#define MAX_PANELS 10
-#define MAX_STAGES 3
+unsigned char keycode = 0, st, tr1, tr2;
 
-// è¤‡æ•°ã‚¹ãƒ†ãƒ¼ã‚¸
-const char *levels[MAX_STAGES] = {
-	"##########"
-	"#P.......#"
-	"#.###S...#"
-	"#.S...B..#"
-	"#.###.####"
-	"#.S......#"
-	"#.###.####"
-	"#........#"
-	"#........#"
-	"#####G####",
+unsigned char keyscan(void)
+{
+	keycode = 0;
+	st = get_stick(0) | get_stick(1);
+	tr1 = get_trigger(0) | get_trigger(1);
+	tr2 = get_trigger(2);
 
-	"##########"
-	"#P..S....#"
-	"#.###....#"
-	"#..B.S...#"
-	"#.###.####"
-	"#....S...#"
-	"#.###.####"
-	"#........#"
-	"#....,...#"
-	"#####G####",
-
-	"##########"
-	"#P.......#"
-	"#.###S####"
-	"#..B.....#"
-	"#.### ####"
-	"#........#"
-	"#.### ####"
-	"#....S...#"
-	"#........#"
-	"#####G####"
-};
-
-// ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°
-int player_x = -1, player_y = -1;
-int gravity_x = -1, gravity_y = -1;
-int panels_x[MAX_PANELS], panels_y[MAX_PANELS];
-int panel_count = 0;
-int goal_x, goal_y;
-
-int player_hp = 20;
-int player_atk = 5;
-int exp = 0;
-int level = 1;
-int game_mode = 0;  // 0:ãƒ‘ã‚ºãƒ«, 1:ãƒãƒˆãƒ«
-char battle_msg[40];
-int current_stage = 0;
-
-int enemy_hp, enemy_atk;
-int old_player_x = -1, old_player_y = -1;
-int old_gravity_x = -1, old_gravity_y = -1;
-int old_panels_x[MAX_PANELS], old_panels_y[MAX_PANELS];
-
-// é–¢æ•°
-void parse_map();
-int can_move(int x, int y);
-int try_move(int dx, int dy);
-void gravity_fall();
-void draw_background();
-void update_objects();
-void start_battle();
-void update_battle();
-void play_sound_effect();
-
-void main() {
-	int i;
-	for(i = 0; i < MAX_PANELS; ++i){
-		old_panels_x[i] = old_panels_y[i] = -1;
+	if((st == 1)){ /* 8 */
+		keycode |= KEY_UP1;
 	}
+	if((st == 3)){ /* 6 */
+		keycode |= KEY_RIGHT1;
+	}
+	if((st == 5)){ /* 2 */
+		keycode |= KEY_DOWN1;
+	}
+	if(((st == 7))){ /* 4 */
+		keycode |= KEY_LEFT1;
+	}
+	if((tr1)){ /* X,SPACE */
+		keycode |= KEY_A;
+	}
+	if((tr2)){ /* C */
+		keycode |= KEY_B;
+	}
+	return keycode;
+}
+
+void play_sound_effect(void) {
+	beep();  // ƒVƒ“ƒvƒ‹‚Èƒr[ƒv‰¹
+}
+
+#include "common.h"
+
+int main(void)
+{
 	msx_color(15, 1, 1);
 	set_mode(1);
-	define_tiles();
-	fill_vram(0x01, 32*24);  // åˆå›ã‚¯ãƒªã‚¢ï¼ˆåºŠã§åŸ‹ã‚ã‚‹ï¼‰
 
-	parse_map();
-	draw_background();
-	update_objects();
+	main2();
 
-	while (1) {
-		sprintf(battle_msg, "STAGE:%d", current_stage+1);
-		print_at(0, 20, battle_msg);
-		sprintf(battle_msg, "LEVEL:%d", level);
-		print_at(0, 21, battle_msg);
-		sprintf(battle_msg, "HP:%d", player_hp);
-		print_at(0, 22, battle_msg);
-
-		if (game_mode == 0) {
-			gravity_fall();
-
-			if (get_trigger(0)) {
-				print_at(0, 23, "Give Up");
-				wait(60);
-				cls();
-				parse_map();
-				draw_background();
-				update_objects();
-			}else if (get_stick(0) && ((rand() % 100) < 5)) {
-				start_battle();
-			}else{
-				if ((get_stick(0) == 3) && try_move(1, 0)) { wait(4); update_objects(); play_sound_effect(); }
-				if ((get_stick(0) == 7) && try_move(-1, 0)) { wait(4); update_objects(); play_sound_effect(); }
-				if ((get_stick(0) == 5) && try_move(0, 1)) { wait(4); update_objects(); play_sound_effect(); }
-				if ((get_stick(0) == 1) && try_move(0, -1)) { wait(4); update_objects(); play_sound_effect(); }
-			}
-		} else {
-			update_battle();
-		}
-		vsync();
-	}
-}
-
-void parse_map() {
-	static int x, y;
-	panel_count = 0;
-	const char *current_level = levels[current_stage];
-	for (y = 0; y < MAP_H; y++) {
-		for (x = 0; x < MAP_W; x++) {
-			char c = current_level[y * MAP_W + x];
-			if (c == 'P') { player_x = x; player_y = y; }
-			if (c == 'B') { gravity_x = x; gravity_y = y; }
-			if (c == 'S') {
-				if (panel_count < MAX_PANELS) {
-					panels_x[panel_count] = x;
-					panels_y[panel_count] = y;
-					panel_count++;
-				}
-			}
-			if (c == 'G') { goal_x = x; goal_y = y; }
-		}
-	}
-}
-
-int can_move(int x, int y) {
-	if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return 0;
-	if (levels[current_stage][y * MAP_W + x] == '#') return 0;
-	if (gravity_x == x && gravity_y == y) return 0;
-
-	static int i;
-	for (i = 0; i < panel_count; i++) {
-		if (panels_x[i] == x && panels_y[i] == y) return 0;
-	}
-	return 1;
-}
-
-int try_move(int dx, int dy) {
-	static int nx, ny;
-	nx = player_x + dx;
-	ny = player_y + dy;
-
-	if (gravity_x == nx && gravity_y == ny) {
-		int gnx = nx + dx;
-		int gny = ny + dy;
-		if (can_move(gnx, gny)) {
-			gravity_x = gnx;
-			gravity_y = gny;
-//			player_x = nx; player_y = ny;
-			return 1;
-		}
-		return 0;
-	}
-
-	static int i;
-	for (i = 0; i < panel_count; i++) {
-		if (panels_x[i] == nx && panels_y[i] == ny) {
-			int pnx = nx + dx;
-			int pny = ny + dy;
-			if (can_move(pnx, pny)) {
-				panels_x[i] = pnx;
-				panels_y[i] = pny;
-//				player_x = nx; player_y = ny;
-				return 1;
-			}
-			return 0;
-		}
-	}
-
-	if (can_move(nx, ny)) {
-		player_x = nx; player_y = ny;
-		return 1;
-	}
 	return 0;
-}
-
-void gravity_fall() {
-	if (gravity_x == -1) return;
-
-	if (gravity_y + 1 < MAP_H && can_move(gravity_x, gravity_y + 1)) {
-		gravity_y++;
-		play_sound_effect();
-
-		if (gravity_x == goal_x && gravity_y == goal_y) {
-			update_objects();
-			print_at(10, 10, "STAGE CLEAR!!");
-			wait(60);
-			cls();
-			player_hp = 20 + 5 * level;
-			current_stage++;
-			if (current_stage >= MAX_STAGES) current_stage = 0;  // ãƒ«ãƒ¼ãƒ—
-			parse_map();
-			draw_background();
-		}
-			update_objects();
-	}
-}
-
-void draw_background() {
-	static int x, y;
-	for (y = 0; y < MAP_H; y++) {
-		for (x = 0; x < MAP_W; x++) {
-			char c = levels[current_stage][y * MAP_W + x];
-			if (c == '#') put_chr16(x , y, 0);
-			else if (c == 'G') put_chr16(x, y, 5);
-			else put_chr16(x, y, 1);
-		}
-	}
-}
-
-void update_objects() {
-	static int i;
-
-	// å‰ã®ä½ç½®ã‚’åºŠã«æˆ»ã™
-	if (old_player_x >= 0) put_chr16(old_player_x , old_player_y, 1);
-	if ((old_gravity_x != gravity_x) || (old_gravity_y != gravity_y)) put_chr16(old_gravity_x, old_gravity_y, 1);
-	for (i = 0; i < panel_count; i++) {
-		if ((old_panels_x[i] != panels_x[i]) || old_panels_y[i] != panels_y[i]) put_chr16(old_panels_x[i], old_panels_y[i], 1);
-	}
-
-	// æ–°ã—ã„ä½ç½®ã«æç”»
-	if (player_x >= 0)
-		put_chr16(player_x, player_y, 2);  // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼
-
-	if (gravity_x >= 0) put_chr16(gravity_x, gravity_y, 4);  // é‡åŠ›ãƒ‘ãƒãƒ«ï¼ˆBï¼‰
-
-	for (i = 0; i < panel_count; i++) {
-		put_chr16(panels_x[i], panels_y[i], 3);  // é€šå¸¸ãƒ‘ãƒãƒ«ï¼ˆSï¼‰
-	}
-
-	// ä½ç½®ä¿å­˜
-	old_player_x = player_x; old_player_y = player_y;
-	old_gravity_x = gravity_x; old_gravity_y = gravity_y;
-	for (i = 0; i < panel_count; i++) {
-		old_panels_x[i] = panels_x[i];
-		old_panels_y[i] = panels_y[i];
-	}
-}
-
-void start_battle() {
-	game_mode = 1;
-	enemy_hp = 10 + (level - 1) * 5;
-	enemy_atk = 3 + (level - 1) * 2;
-	strcpy(battle_msg, "Slime appeared!");
-	cls();
-	// ã‚¹ãƒ©ã‚¤ãƒ è¡¨ç¤ºï¼ˆä¸­å¤®ä¸Šéƒ¨ã«ï¼‰
-	put_chr16(8, 2, 6);  // ã‚¹ãƒ©ã‚¤ãƒ ã‚­ãƒ£ãƒ©ã‚³ãƒ¼ãƒ‰6
-	print_at(5, 8, battle_msg);
-	print_at(5, 12, "Press SPACE to attack");
-}
-
-void update_battle() {
-	if (get_trigger(0)) {
-		enemy_hp -= player_atk;
-		if (enemy_hp <= 0) {
-			exp += 10;
-			if (exp >= level * 20) {
-				level++;
-				exp = 0;
-				player_hp = 20 + 5 * level;
-				player_atk += 2;
-				print_at(5, 14, "Level Up!");
-				wait(30);
-			}
-			cls();
-			strcpy(battle_msg, "Enemy defeated!");
-			print_at(5, 10, battle_msg);
-			wait(60);
-			cls();
-			game_mode = 0;
-			draw_background();
-			update_objects();
-		} else {
-			player_hp -= enemy_atk;
-			sprintf(battle_msg, "You took %d damage! HP:%d", enemy_atk, player_hp);
-			cls();
-			// ã‚¹ãƒ©ã‚¤ãƒ å†æç”»ï¼ˆãƒãƒˆãƒ«ç¶™ç¶šæ™‚ï¼‰
-			put_chr16(8, 2, 6);
-			print_at(5, 8, "Enemy defeated? No!");
-			print_at(5, 10, battle_msg);
-			if(player_hp > 0){
-				print_at(5, 12, "Press SPACE to attack");
-			}else{
-				wait(60);
-				cls();
-				print_at(10, 10, "You dead!");
-				player_hp = 20 + 5 * level;
-				wait(60);
-				cls();
-				game_mode = 0;
-				parse_map();
-				draw_background();
-				update_objects();
-			}
-		}
-		play_sound_effect();
-		wait(10);
-	}
-}
-
-void play_sound_effect() {
-	beep();  // ã‚·ãƒ³ãƒ—ãƒ«ãªãƒ“ãƒ¼ãƒ—éŸ³
-}
+}}
