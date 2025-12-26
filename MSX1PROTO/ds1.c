@@ -190,24 +190,30 @@ void main() {
 	update_objects();
 
 	while (1) {
+		sprintf(battle_msg, "STAGE:%d", current_stage+1);
+		print_at(0, 20, battle_msg);
+		sprintf(battle_msg, "LEVEL:%d", level);
+		print_at(0, 21, battle_msg);
+		sprintf(battle_msg, "HP:%d", player_hp);
+		print_at(0, 22, battle_msg);
+
 		if (game_mode == 0) {
 			gravity_fall();
 
-			if ((get_stick(0) == 3) && try_move(1, 0)) { wait(4); update_objects(); play_sound_effect(); }
-			if ((get_stick(0) == 7) && try_move(-1, 0)) { wait(4); update_objects(); play_sound_effect(); }
-			if ((get_stick(0) == 5) && try_move(0, 1)) { wait(4); update_objects(); play_sound_effect(); }
-			if ((get_stick(0) == 1) && try_move(0, -1)) { wait(4); update_objects(); play_sound_effect(); }
-
-			if (get_stick(0) && ((rand() % 100) < 5)) {
-				start_battle();
-			}
-			else if (get_trigger(0)) {
+			if (get_trigger(0)) {
 				print_at(0, 23, "Give Up");
 				wait(60);
 				cls();
 				parse_map();
 				draw_background();
 				update_objects();
+			}else if (get_stick(0) && ((rand() % 100) < 5)) {
+				start_battle();
+			}else{
+				if ((get_stick(0) == 3) && try_move(1, 0)) { wait(4); update_objects(); play_sound_effect(); }
+				if ((get_stick(0) == 7) && try_move(-1, 0)) { wait(4); update_objects(); play_sound_effect(); }
+				if ((get_stick(0) == 5) && try_move(0, 1)) { wait(4); update_objects(); play_sound_effect(); }
+				if ((get_stick(0) == 1) && try_move(0, -1)) { wait(4); update_objects(); play_sound_effect(); }
 			}
 		} else {
 			update_battle();
@@ -300,6 +306,7 @@ void gravity_fall() {
 			print_at(10, 10, "STAGE CLEAR!!");
 			wait(60);
 			cls();
+			player_hp = 20 + 5 * level;
 			current_stage++;
 			if (current_stage >= MAX_STAGES) current_stage = 0;  // ループ
 			parse_map();
@@ -370,7 +377,7 @@ void update_battle() {
 			if (exp >= level * 20) {
 				level++;
 				exp = 0;
-				player_hp += 5;
+				player_hp = 20 + 5 * level;
 				player_atk += 2;
 				print_at(5, 14, "Level Up!");
 				wait(30);
@@ -391,7 +398,20 @@ void update_battle() {
 			put_chr16(8, 2, 6);
 			print_at(5, 8, "Enemy defeated? No!");
 			print_at(5, 10, battle_msg);
-			print_at(5, 12, "Press SPACE to attack");
+			if(player_hp > 0){
+				print_at(5, 12, "Press SPACE to attack");
+			}else{
+				wait(60);
+				cls();
+				print_at(10, 10, "You dead!");
+				player_hp = 20 + 5 * level;
+				wait(60);
+				cls();
+				game_mode = 0;
+				parse_map();
+				draw_background();
+				update_objects();
+			}
 		}
 		play_sound_effect();
 		wait(10);
