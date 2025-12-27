@@ -24,7 +24,7 @@ enum {
 
 #define PRINT_MUL 1
 
-void copy_to_vram(char *src, char *dst, int size)
+void copy_to_vram(char *src, short dst, int size)
 {
 	while(size--)
 		vpoke(dst++, *(src++));
@@ -32,7 +32,7 @@ void copy_to_vram(char *src, char *dst, int size)
 
 void fill_vram(int size, char pattern)
 {
-	char *adr = BASE_ADDRESS;
+	short adr = BASE_ADDRESS;
 	while(size--)
 		vpoke(adr++, pattern);
 }
@@ -99,25 +99,25 @@ void cls(void) {
 }
 
 // タイルパターン定義 (8x8)
-unsigned char tile_wall[8]	= {0xFF,0x81,0x81,0x81,0x81,0x81,0x81,0xFF};   // 壁
-unsigned char tile_floor[8]   = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};   // 床
-unsigned char tile_player[8]  = {0x18,0x3C,0x7E,0xDB,0xFF,0x66,0x66,0xFF};   // プレイヤー
-unsigned char tile_normal[8]  = {0xFF,0xFF,0xDB,0xDB,0xDB,0xDB,0xFF,0xFF};   // 通常パネル（S） - シンプルブロック
-unsigned char tile_gravity[8] = {0xFF,0xFF,0xDB,0xDB,0x7E,0x3C,0x18,0xFF};   // 重力パネル（B） - 下向き矢印付き
-unsigned char tile_goal[8]	= {0x3C,0x42,0x81,0x81,0x81,0x81,0x42,0x3C};   // ゴール
-unsigned char tile_hollow[8] = {0xFF,0x81,0x42,0x24,0x18,0x24,0x42,0xFF};  // 格子状の壁
-unsigned char tile_slime[8]   = {0x18,0x3C,0x7E,0x99,0x7E,0x3C,0x18,0x00};   // スライム
+char tile_wall[8]	= {0xFF,0x81,0x81,0x81,0x81,0x81,0x81,0xFF};   // 壁
+char tile_floor[8]   = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};   // 床
+char tile_player[8]  = {0x18,0x3C,0x7E,0xDB,0xFF,0x66,0x66,0xFF};   // プレイヤー
+char tile_normal[8]  = {0xFF,0xFF,0xDB,0xDB,0xDB,0xDB,0xFF,0xFF};   // 通常パネル（S） - シンプルブロック
+char tile_gravity[8] = {0xFF,0xFF,0xDB,0xDB,0x7E,0x3C,0x18,0xFF};   // 重力パネル（B） - 下向き矢印付き
+char tile_goal[8]	= {0x3C,0x42,0x81,0x81,0x81,0x81,0x42,0x3C};   // ゴール
+char tile_hollow[8] = {0xFF,0x81,0x42,0x24,0x18,0x24,0x42,0xFF};  // 格子状の壁
+char tile_slime[8]   = {0x18,0x3C,0x7E,0x99,0x7E,0x3C,0x18,0x00};   // スライム
 
 
-void define_tiles() {
-	copy_to_vram(tile_wall,	TILE_WALL * 8, 8); 
-	copy_to_vram(tile_floor, TILE_FLOOR * 8, 8);
-	copy_to_vram(tile_player, TILE_PLAYER * 8, 8);
-	copy_to_vram(tile_normal, TILE_NORMAL * 8, 8);	//通常パネル
-	copy_to_vram(tile_gravity,TILE_GRAVITY * 8, 8);	// 重力パネル
-	copy_to_vram(tile_goal,	TILE_GOAL * 8, 8);
-	copy_to_vram(tile_slime, TILE_SLIME * 8, 8);
-	copy_to_vram(tile_hollow, TILE_HOLLOW * 8, 8);	//	:新ブロック
+void define_tiles(void) {
+	copy_to_vram(tile_wall, (TILE_WALL * 8), 8); 
+	copy_to_vram(tile_floor, (TILE_FLOOR * 8), 8);
+	copy_to_vram(tile_player, (TILE_PLAYER * 8), 8);
+	copy_to_vram(tile_normal, (TILE_NORMAL * 8), 8);	//通常パネル
+	copy_to_vram(tile_gravity,(TILE_GRAVITY * 8), 8);	// 重力パネル
+	copy_to_vram(tile_goal,	(TILE_GOAL * 8), 8);
+	copy_to_vram(tile_slime, (TILE_SLIME * 8), 8);
+	copy_to_vram(tile_hollow, (TILE_HOLLOW * 8), 8);	//	:新ブロック
 }
 
 unsigned char keycode = 0, st, tr1, tr2;
@@ -164,4 +164,4 @@ int main(void)
 	main2();
 
 	return 0;
-}}
+}

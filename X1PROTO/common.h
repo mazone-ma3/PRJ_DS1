@@ -6,6 +6,8 @@
 #define MAX_PANELS 10
 #define MAX_STAGES 3
 
+const int level_experience[10] = {0, 20, 50, 90, 140, 200, 270, 350, 440, 540};
+
 // 複数ステージ
 const char *levels[MAX_STAGES] = {
 	"##########"
@@ -51,10 +53,11 @@ int goal_x, goal_y;
 
 int player_hp = 20;
 int player_atk = 5;
-int exp = 0;
+int experience = 0;
 int level = 1;
 int game_mode = 0;  // 0:パズル, 1:バトル
 char battle_msg[40];
+char *pbattle_msg;
 int current_stage = 0;
 
 int enemy_hp, enemy_atk;
@@ -74,24 +77,90 @@ void update_objects(void);
 void start_battle(void);
 void update_battle(void);
 
+
+int divideBy10(int n) {
+	int quotient = 0;
+	int remainder = n;
+
+	while (remainder >= 10) {
+		remainder -= 10;
+		quotient++;
+	}
+	return quotient;
+}
+
+int get_mod10(int n) {
+	int res;
+	res = n - divideBy10(n) * 10;
+	return (res >= 10) ? res - 10 : res;
+}
+
+
+int itoa2(int value, char *str) {
+	char *p = str;
+	int tmp = value;
+	int size = 0;
+	if (value <= 0) { *p++ = '0'; *p = '\0'; return 0; }
+	while (tmp) { *p++ = '0' + get_mod10(tmp); tmp = divideBy10(tmp); }
+	*p-- = '\0';
+	// 逆転
+	char *start = str;
+	while (start < p) {
+		size++;
+		char t = *start; *start++ = *p; *p-- = t;
+	}
+	return size;
+}
+
+unsigned char simple_rnd(void) {
+	static unsigned char r = 1;
+	r = r * 37 + 41;  // 適当な定数
+	return r;
+}
+
+int strcpy2(char *dst, char *src)
+{
+	int size = 0;
+	while(*src != '\0'){
+		size++;
+		*(dst++) = *(src++);
+	}
+	*dst = '\0';
+	return size;
+}
+
+
 void main2(void) {
 	int i;
 	for(i = 0; i < MAX_PANELS; ++i){
 		old_panels_x[i] = old_panels_y[i] = -1;
 	}
 	define_tiles();
-	fill_vram(0x01, 32*24);  // 初回クリア（床で埋める）
+//	fill_vram(0x01, 32*24);  // 初回クリア（床で埋める）
 
 	parse_map();
 	draw_background();
 	update_objects();
 
 	while (1) {
-		sprintf(battle_msg, "STAGE:%d", current_stage+1);
+		//sprintf(battle_msg, "STAGE:%d", current_stage+1);
+		pbattle_msg = battle_msg;
+		pbattle_msg += strcpy2(pbattle_msg, "STAGE:");
+		pbattle_msg += itoa2(current_stage+1, pbattle_msg);
+//		*pbattle_msg = '\0';
 		print_at(PRINT_MUL * 0, 20, battle_msg);
-		sprintf(battle_msg, "LEVEL:%d", level);
+		//sprintf(battle_msg, "LEVEL:%d", level);
+		pbattle_msg = battle_msg;
+		pbattle_msg += strcpy2(pbattle_msg, "LEVEL:");
+		pbattle_msg += itoa2(level, pbattle_msg);
+//		*pbattle_msg = '\0';
 		print_at(PRINT_MUL * 0, 21, battle_msg);
-		sprintf(battle_msg, "HP:%d", player_hp);
+		pbattle_msg = battle_msg;
+		//sprintf(battle_msg, "HP:%d", player_hp);
+		pbattle_msg = battle_msg;
+		pbattle_msg += strcpy2(pbattle_msg, "HP:");
+		pbattle_msg += itoa2(player_hp, pbattle_msg);
+//		*pbattle_msg = '\0';
 		print_at(PRINT_MUL * 0, 22, battle_msg);
 
 		if (game_mode == 0) {
@@ -106,7 +175,7 @@ void main2(void) {
 				draw_background();
 				update_objects();
 			}
-			else if (keycode && ((rand() % 100) < 5)) {
+			else if (keycode && ((simple_rnd() & 0x7F) < 13)) {  // 約5% (13/128)
 				start_battle();
 			}else{
 				if ((keycode & KEY_RIGHT1) && try_move(1, 0)) { wait(4); update_objects(); play_sound_effect(); }
@@ -265,29 +334,31 @@ void start_battle(void) {
 	game_mode = 1;
 	enemy_hp = 10 + (level - 1) * 5;
 	enemy_atk = 3 + (level - 1) * 2;
-	strcpy(battle_msg, "Slime appeared!");
+	strcpy2(battle_msg, "Slime appeared!");
 	cls();
 	// スライム表示（中央上部に）
 	put_chr16(8, 2, TILE_SLIME);  // スライムキャラコード6
 	print_at(PRINT_MUL * 5, 8, battle_msg);
 	print_at(PRINT_MUL * 5, 12, "Press SPACE to attack");
+	wait(60);
 }
 
 void update_battle(void) {
 	if (keyscan() & KEY_A) {
 		enemy_hp -= player_atk;
 		if (enemy_hp <= 0) {
-			exp += 10;
-			if (exp >= level * 20) {
+			experience += 10;
+//			if (experience >= level * 20) {
+			if (experience >= level_experience[level]) {
 				level++;
-				exp = 0;
+				experience = 0;
 				player_hp = 20 + 5 * level;
 				player_atk += 2;
 				print_at(PRINT_MUL * 5, 14, "Level Up!");
 				wait(30);
 			}
 			cls();
-			strcpy(battle_msg, "Enemy defeated!");
+			strcpy2(battle_msg, "Enemy defeated!");
 			print_at(PRINT_MUL * 5, 10, battle_msg);
 			wait(60);
 			cls();
@@ -296,7 +367,13 @@ void update_battle(void) {
 			update_objects();
 		} else {
 			player_hp -= enemy_atk;
-			sprintf(battle_msg, "You took %d damage! HP:%d", enemy_atk, player_hp);
+			//sprintf(battle_msg, "You took %d damage! HP:%d", enemy_atk, player_hp);
+			pbattle_msg = battle_msg;
+			pbattle_msg += strcpy2(pbattle_msg, "You took ");
+			pbattle_msg += itoa2(enemy_atk, pbattle_msg);
+			pbattle_msg += strcpy2(pbattle_msg, " damage! HP:");
+			pbattle_msg += itoa2(player_hp, pbattle_msg);
+//			*pbattle_msg = '\0';
 			cls();
 			// スライム再描画（バトル継続時）
 			put_chr16(8, 2, TILE_SLIME);

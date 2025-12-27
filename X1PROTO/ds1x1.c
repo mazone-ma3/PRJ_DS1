@@ -13,7 +13,7 @@
 //#define PARTS_DATA (MAP_ADR+0x3c00)
 //#define CHRPAT_ADR 0xC000
 
-#define PARTS_SIZE 0x1800
+//#define PARTS_SIZE 0x1800
 #define CHR_SIZE 0xf00
 
 unsigned short y_table[200];
@@ -21,7 +21,7 @@ unsigned short y_table[200];
 unsigned char vram_data[CHR_SIZE];
 //#define VRAM_DATA_ADR vram_data
 
-#define PARTS_HEAD 0x3c00 /*組み合わせキャラデータの先頭番地*/
+//#define PARTS_HEAD 0x3c00 /*組み合わせキャラデータの先頭番地*/
 //#define BUFFSIZE 16384
 //unsigned char mapdata[BUFFSIZE];
 
@@ -32,18 +32,18 @@ unsigned char vram_data[CHR_SIZE];
 #define ERROR 1
 #define NOERROR 0
 
-
+/*
 #define SIZE 80
-
-#define X_SIZE 18
-#define Y_SIZE 18
+*/
+//#define X_SIZE 18
+//#define Y_SIZE 18
 
 #define PARTS_X 2
 #define PARTS_Y 8
-
+/*
 #define MAP_SIZE_X 128
 #define MAP_SIZE_Y 128
-
+*/
 #define OFS_X 2
 #define OFS_Y 2
 
@@ -52,7 +52,7 @@ unsigned char vram_data[CHR_SIZE];
 
 unsigned char turbo = 0;
 
-unsigned short vram_ofs;
+//unsigned short vram_ofs;
 //unsigned char map_data[(X_SIZE+2) * 32];
 //unsigned char *WK1FD0 = (unsigned char *)0xf8d6;
 
@@ -478,7 +478,7 @@ patloop4:
 	jr	nz,patloop3
 __endasm;
 }
-
+/*
 void pat_sub(void)
 {
 //	outp(0x3000 + vram_ofs, no * 2);
@@ -492,14 +492,14 @@ __asm
 	inc	a
 	out	(c),a
 __endasm;
-}
-
+}*/
+/*
 void pat_sub2(void)
 {
 	outp(0x2000 + vram_ofs, 0x27);
 	outp(0x2000 + vram_ofs+1, 0x27);
-}
-
+}*/
+/*
 void chr_sub(void)
 {
 	unsigned char no2 = chr_tbl[dir * 2 + dir2][(i - CHR_X) + (j - CHR_Y) * 2];
@@ -508,7 +508,7 @@ void chr_sub(void)
 
 	pat_sub();
 }
-
+*/
 /*パレット・セット*/
 void pal_set_text(unsigned char pal_no, unsigned char color, unsigned char red, unsigned char green,
 	unsigned char blue)
@@ -655,19 +655,19 @@ unsigned char data_buf[5];
 unsigned char k0, k1, k2, k3, st, data_no;
 unsigned char k0_old, k1_old, k2_old;
 //unsigned short data, data_tmp;
-unsigned char *data, *data_tmp;
+//unsigned char *data, *data_tmp;
 
-unsigned char pat_no;
+//unsigned char pat_no;
 //unsigned short pat_adr;
-unsigned char *pat_adr;
-unsigned char x = 165, y = 30,xx, yy, old_x = 255, old_y = 255, k;
+//unsigned char *pat_adr;
+//unsigned char x = 165, y = 30,xx, yy, old_x = 255, old_y = 255, k;
 
-unsigned short vram_ofs_tmp;
+//unsigned short vram_ofs_tmp;
 
 //unsigned char old_map_data[(X_SIZE + 2) * 32];
-unsigned char sub_flag;
-unsigned char *map_adr;
-unsigned char *old_map_adr;
+//unsigned char sub_flag;
+//unsigned char *map_adr;
+//unsigned char *old_map_adr;
 
 unsigned char fadeflag = 0;
 
@@ -892,14 +892,14 @@ int main(void)
 		outp(0x1fc5, 0x80);	/* グラフィックパレットアクセスON */
 //		pal_allblack(0);
 	}
-
+/*
 	for(i = 0; i < X_SIZE - 2; ++i){
 		for(j = 0; j < Y_SIZE - 2; ++j){
 			vram_ofs = (OFS_X + i) * PARTS_X + (OFS_Y + j) * SIZE;
 			pat_sub2();
 		}
 	}
-
+*/
 	if(zmode){
 		outp(0x1fc0, 0x01);	/* 多色モードプライオリティ */
 //		outp(0x1fe0, 0);
