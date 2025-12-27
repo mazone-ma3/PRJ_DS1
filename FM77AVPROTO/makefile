@@ -1,4 +1,4 @@
-﻿# ds1.b77 makefile for FM77AV GCC (gcc6809 4.3.6 blanch)
+﻿# ds1.b77 makefile for FM77AV GCC (gcc6809 4.3.6 branch)
 
 TARGET = ds1
 
