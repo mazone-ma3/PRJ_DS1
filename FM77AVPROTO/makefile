@@ -5,7 +5,8 @@ TARGET = ds1
 #マクロ
 CC = m6809-unknown-none-gcc-4.3.6
 
-CFLAGS = -S
+CFLAGS = -c
+#-S
 
 .SUFFIXES: .rel .s
 .s.rel:
@@ -13,8 +14,8 @@ CFLAGS = -S
 
 .SUFFIXES: .rel .c
 .c.rel:
-	$(CC) $(CFLAGS) $<
-	as6809 -l -o $*.rel  $*.s
+	$(CC) $(CFLAGS) $< -o $*.rel
+#	as6809 -l -o $*.rel  $*.s
 
 #生成手順
 OBJNAME = $(TARGET)
@@ -26,9 +27,10 @@ clean:
 
 OBJFILES = crt0.rel $(OBJNAME).rel
 # /usr/local/lib/gcc/m6809-unknown-none/4.3.6/crt0.o
+LIBPATH = /usr/local/lib/gcc/m6809-unknown-none/4.3.6/
 
 $(TARGET).b77 : $(OBJFILES)
-	aslink -b .text=0x1600 -m $(OBJNAME).map $(OBJFILES) -s $(OBJNAME).s
+	aslink -b .text=0x1600 -m $(OBJNAME).map  $(OBJFILES) -s $(OBJNAME).s -l $(LIBPATH)libgcc.a
 	objcopy -I srec -O binary $(OBJNAME).s19 $(OBJNAME).bin
 	fm7conv $(OBJNAME).bin $(OBJNAME).b77
 

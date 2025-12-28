@@ -142,20 +142,20 @@ void main2(void) {
 	while (1) {
 		//sprintf(battle_msg, "STAGE:%d", current_stage+1);
 		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, "STAGE:");
+		pbattle_msg += strcpy2(pbattle_msg, "STAGE ");
 		pbattle_msg += itoa2(current_stage+1, pbattle_msg);
 //		*pbattle_msg = '\0';
 		print_at(PRINT_MUL * 0, 20, battle_msg);
 		//sprintf(battle_msg, "LEVEL:%d", level);
 		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, "LEVEL:");
+		pbattle_msg += strcpy2(pbattle_msg, "LEVEL ");
 		pbattle_msg += itoa2(level, pbattle_msg);
 //		*pbattle_msg = '\0';
 		print_at(PRINT_MUL * 0, 21, battle_msg);
 		pbattle_msg = battle_msg;
 		//sprintf(battle_msg, "HP:%d", player_hp);
 		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, "HP:");
+		pbattle_msg += strcpy2(pbattle_msg, "HP ");
 		pbattle_msg += itoa2(player_hp, pbattle_msg);
 //		*pbattle_msg = '\0';
 		print_at(PRINT_MUL * 0, 22, battle_msg);
@@ -268,7 +268,7 @@ void gravity_fall(void) {
 
 				if (gravity_x == goal_x && gravity_y == goal_y) {
 					update_objects();
-					print_at(PRINT_MUL * 10, 10, "STAGE CLEAR!!");
+					print_at(PRINT_MUL * 10, 10, "STAGE CLEAR");
 					wait(60);
 					cls();
 					player_hp = 20 + 5 * level;
@@ -328,13 +328,13 @@ void start_battle(void) {
 	game_mode = 1;
 	enemy_hp = 10 + (level - 1) * 5;
 	enemy_atk = 3 + (level - 1) * 2;
-	strcpy2(battle_msg, "Slime appeared!");
+	strcpy2(battle_msg, "Slime appeared");
 	cls();
 	// スライム表示（中央上部に）
 	put_chr16(8, 2, TILE_SLIME);  // スライムキャラコード6
 	print_at(PRINT_MUL * 5, 8, battle_msg);
-	print_at(PRINT_MUL * 5, 12, "Press 'A' to attack");
-	print_at(PRINT_MUL * 5, 14, "Press 'B' to escape");
+	print_at(PRINT_MUL * 5, 12, "Press  A  to attack");
+	print_at(PRINT_MUL * 5, 14, "Press  B  to escape");
 	wait(60);
 }
 
@@ -344,21 +344,21 @@ void damage_battle(void) {
 	pbattle_msg = battle_msg;
 	pbattle_msg += strcpy2(pbattle_msg, "You took ");
 	pbattle_msg += itoa2(enemy_atk, pbattle_msg);
-	pbattle_msg += strcpy2(pbattle_msg, " damage! HP:");
+	pbattle_msg += strcpy2(pbattle_msg, " damage  HP ");
 	pbattle_msg += itoa2(player_hp, pbattle_msg);
 //	*pbattle_msg = '\0';
 	cls();
 	// スライム再描画（バトル継続時）
 	put_chr16(8, 2, TILE_SLIME);
-	print_at(PRINT_MUL * 5, 8, "Enemy defeated? No!");
+	print_at(PRINT_MUL * 5, 8, "Enemy defeated  No");
 	print_at(PRINT_MUL * 5, 10, battle_msg);
 	if(player_hp > 0){
-		print_at(PRINT_MUL * 5, 12, "Press 'A' to attack");
-		print_at(PRINT_MUL * 5, 14, "Press 'B' to escape");
+		print_at(PRINT_MUL * 5, 12, "Press  A  to attack");
+		print_at(PRINT_MUL * 5, 14, "Press  B  to escape");
 	}else{
 		wait(60);
 		cls();
-		print_at(PRINT_MUL * 10, 10, "You dead!");
+		print_at(PRINT_MUL * 10, 10, "You dead");
 		player_hp = 20 + 5 * level;
 		wait(60);
 		cls();
@@ -381,11 +381,11 @@ void update_battle(void) {
 				experience = 0;
 				player_hp = 20 + 5 * level;
 				player_atk += 2;
-				print_at(PRINT_MUL * 5, 16, "Level Up!");
+				print_at(PRINT_MUL * 5, 16, "Level Up");
 				wait(30);
 			}
 			cls();
-			strcpy2(battle_msg, "Enemy defeated!");
+			strcpy2(battle_msg, "Enemy defeated");
 			print_at(PRINT_MUL * 5, 10, battle_msg);
 			wait(60);
 			cls();
@@ -399,7 +399,7 @@ void update_battle(void) {
 		wait(10);
 	} else if (keycode & KEY_B) {  // 逃げる
 		if (simple_rnd() & 0xC0) {  // 約70%成功 (192/256)
-			strcpy2(battle_msg, "Escaped!");
+			strcpy2(battle_msg, "Escaped");
 			print_at(PRINT_MUL * 5, 16, battle_msg);
 			wait(60);
 			cls();
@@ -408,7 +408,7 @@ void update_battle(void) {
 			update_objects();
 		} else {
 			player_hp -= enemy_atk;
-			strcpy2(battle_msg, "Failed to escape!");
+			strcpy2(battle_msg, "Failed to escape");
 			print_at(PRINT_MUL * 5, 16, battle_msg);
 			wait(60);
 			cls();

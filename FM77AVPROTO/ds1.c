@@ -5,6 +5,11 @@
 #include "ds1_grp.h"
 #include "font.h"
 
+void abort(void)
+{
+	for(;;);
+}
+
 /* BITデータ算出 */
 #define BITDATA(n) (1 << (n))
 
