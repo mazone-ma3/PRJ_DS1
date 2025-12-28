@@ -918,19 +918,16 @@ int main(void)
 //	if(!turbo)
 	set_key();
 
-	main2();
-	do{
-#ifdef DEBUG
-
-#endif
-		if(fadeflag == 0){
+/*	do{*/
+		main2();
+/*		if(fadeflag == 0){
 			fadeflag = 1;
 			if(inp(0x1fb0) == 0x90){
 				fadeinblack(org_pal, 0, 3);
 			}
 		}
 
-	}while(!(k2 & 0x80) && (k3 != 27));
+	}while(!(k2 & 0x80) && (k3 != 27));*/
 //	printf("End.\n");
 
 	if(zmode){

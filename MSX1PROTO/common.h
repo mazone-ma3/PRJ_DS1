@@ -6,6 +6,9 @@
 #define MAX_PANELS 10
 #define MAX_STAGES 3
 
+// 仮想VRAM（マップの可変状態を保持）
+char vram[MAP_H][MAP_W];  // 書き換え可能なマップ
+
 const int level_experience[10] = {0, 20, 50, 90, 140, 200, 270, 350, 440, 540};
 
 // 複数ステージ
@@ -47,7 +50,6 @@ const char *levels[MAX_STAGES] = {
 // グローバル変数
 int player_x = -1, player_y = -1;
 int gravity_x = -1, gravity_y = -1;
-int panels_x[MAX_PANELS], panels_y[MAX_PANELS];
 int panel_count = 0;
 int goal_x, goal_y;
 
@@ -63,7 +65,6 @@ int current_stage = 0;
 int enemy_hp, enemy_atk;
 int old_player_x = -1, old_player_y = -1;
 int old_gravity_x = -1, old_gravity_y = -1;
-int old_panels_x[MAX_PANELS], old_panels_y[MAX_PANELS];
 
 char c;
 
@@ -131,10 +132,6 @@ int strcpy2(char *dst, char *src)
 
 
 void main2(void) {
-	int i;
-	for(i = 0; i < MAX_PANELS; ++i){
-		old_panels_x[i] = old_panels_y[i] = -1;
-	}
 	define_tiles();
 //	fill_vram(0x01, 32*24);  // 初回クリア（床で埋める）
 
@@ -165,8 +162,12 @@ void main2(void) {
 
 		if (game_mode == 0) {
 			gravity_fall();
-
 			keycode = keyscan();
+			if(!keycode){
+				continue;
+			}
+			if (keycode & KEY_B)
+				break;
 			if (keycode & KEY_A) {
 				print_at(PRINT_MUL * 0, 23, "Give Up");
 				wait(60);
@@ -192,20 +193,15 @@ void main2(void) {
 
 void parse_map(void) {
 	static int x, y;
+	const char *lvl = levels[current_stage];
 	panel_count = 0;
-	const char *current_level = levels[current_stage];
 	for (y = 0; y < MAP_H; y++) {
 		for (x = 0; x < MAP_W; x++) {
-			char c = current_level[y * MAP_W + x];
-			if (c == 'P') { player_x = x; player_y = y; }
-			if (c == 'B') { gravity_x = x; gravity_y = y; }
-			if (c == 'S') {
-				if (panel_count < MAX_PANELS) {
-					panels_x[panel_count] = x;
-					panels_y[panel_count] = y;
-					panel_count++;
-				}
-			}
+			char c = lvl[y * MAP_W + x];
+			vram[y][x] = c;  // 仮想VRAMにコピー
+			if (c == 'P') { old_player_x = player_x = x; old_player_y = player_y = y; vram[y][x] = '.'; }
+			if (c == 'B') { old_gravity_x = gravity_x = x; old_gravity_y = gravity_y = y; vram[y][x] = '.'; }
+
 			if (c == 'G') { goal_x = x; goal_y = y; }
 		}
 	}
@@ -213,14 +209,11 @@ void parse_map(void) {
 
 int can_move(int x, int y) {
 	if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return 0;
-	char c = levels[current_stage][y * MAP_W + x];
-	if (c == '#' || c == 'H') return 0;  // 壁と新ブロックはプレイヤー通れない
+	if (vram[y][x] == '#') return 0;
+	if (vram[y][x] == 'H') return 0;
+	if (vram[y][x] == 'S') return 0;
 	if (gravity_x == x && gravity_y == y) return 0;
 
-	static int i;
-	for (i = 0; i < panel_count; i++) {
-		if (panels_x[i] == x && panels_y[i] == y) return 0;
-	}
 	return 1;
 }
 
@@ -235,28 +228,21 @@ int try_move(int dx, int dy) {
 		if (can_move(gnx, gny)) {
 			gravity_x = gnx;
 			gravity_y = gny;
-//			player_x = nx; player_y = ny;
 			return 1;
 		}
 		return 0;
 	}
-
-	static int i;
-	for (i = 0; i < panel_count; i++) {
-		if (panels_x[i] == nx && panels_y[i] == ny) {
-			int pnx = nx + dx;
-			int pny = ny + dy;
-			if (can_move(pnx, pny)) {
-				panels_x[i] = pnx;
-				panels_y[i] = pny;
-//				player_x = nx; player_y = ny;
-				return 1;
-			}
-			return 0;
+	if(vram[ny][nx] == 'S'){
+		int pnx = nx + dx;
+		int pny = ny + dy;
+		if (can_move(pnx, pny)) {
+			vram[ny][nx] = '.';
+			vram[pny][pnx] = 'S';
+			put_chr16(nx, ny, TILE_FLOOR);
+			put_chr16(pnx, pny, TILE_NORMAL);
 		}
 	}
-
-	if (can_move(nx, ny)) {
+	else if (can_move(nx, ny)) {
 		player_x = nx; player_y = ny;
 		return 1;
 	}
@@ -266,25 +252,43 @@ int try_move(int dx, int dy) {
 void gravity_fall(void) {
 	if (gravity_x == -1) return;
 
+	for(;;){
 	if (gravity_y + 1 < MAP_H) {
-		c = levels[current_stage][(gravity_y + 1) * MAP_W + gravity_x];
-		if ((c == 'H') || can_move(gravity_x, gravity_y + 1)) {  // Hも突き抜ける
-			gravity_y++;
-			play_sound_effect();
+		int nx = gravity_x;
+		int ny = gravity_y + 1;
+		char below = vram[ny][nx];
 
-			if (gravity_x == goal_x && gravity_y == goal_y) {
-				update_objects();
-				print_at(PRINT_MUL * 10, 10, "STAGE CLEAR!!");
-				wait(60);
-				cls();
-				player_hp = 20 + 5 * level;
-				current_stage++;
-				if (current_stage >= MAX_STAGES) current_stage = 0;  // ループ
-				parse_map();
-				draw_background();
+		if (below != '#') {
+			if (below == 'H') {
+				vram[ny][nx] = '.';  // Hを消す
 			}
-			update_objects();
+			if (can_move(nx, ny)) {
+				gravity_y++;
+				play_sound_effect();
+
+				if (gravity_x == goal_x && gravity_y == goal_y) {
+					update_objects();
+					print_at(PRINT_MUL * 10, 10, "STAGE CLEAR!!");
+					wait(60);
+					cls();
+					player_hp = 20 + 5 * level;
+					current_stage++;
+					if (current_stage >= MAX_STAGES) current_stage = 0;
+					parse_map();
+					draw_background();
+					update_objects();
+				} else {
+					update_objects();  // 落ちた位置を更新
+				}
+			}else{
+				break;
+			}
+		}else{
+			break;
 		}
+	}else{
+		break;
+	}
 	}
 }
 
@@ -292,10 +296,11 @@ void draw_background(void) {
 	static int x, y;
 	for (y = 0; y < MAP_H; y++) {
 		for (x = 0; x < MAP_W; x++) {
-			char c = levels[current_stage][y * MAP_W + x];
-			if (c == '#') put_chr16(x , y, TILE_WALL);
+			char c = vram[y][x];
+			if (c == '#') put_chr16(x, y, TILE_WALL);
 			else if (c == 'G') put_chr16(x, y, TILE_GOAL);
 			else if (c == 'H') put_chr16(x, y, TILE_HOLLOW);
+			else if (c == 'S') put_chr16(x, y, TILE_NORMAL);
 			else put_chr16(x, y, TILE_FLOOR);
 		}
 	}
@@ -307,9 +312,6 @@ void update_objects(void) {
 	// 前の位置を床に戻す
 	if (old_player_x >= 0) put_chr16(old_player_x , old_player_y, TILE_FLOOR);
 	if ((old_gravity_x != gravity_x) || (old_gravity_y != gravity_y)) put_chr16(old_gravity_x, old_gravity_y, TILE_FLOOR);
-	for (i = 0; i < panel_count; i++) {
-		if ((old_panels_x[i] != panels_x[i]) || old_panels_y[i] != panels_y[i]) put_chr16(old_panels_x[i], old_panels_y[i], TILE_FLOOR);
-	}
 
 	// 新しい位置に描画
 	if (player_x >= 0)
@@ -317,17 +319,9 @@ void update_objects(void) {
 
 	if (gravity_x >= 0) put_chr16(gravity_x, gravity_y, TILE_GRAVITY);  // 重力パネル（B）
 
-	for (i = 0; i < panel_count; i++) {
-		put_chr16(panels_x[i], panels_y[i], TILE_NORMAL);  // 通常パネル（S）
-	}
-
 	// 位置保存
 	old_player_x = player_x; old_player_y = player_y;
 	old_gravity_x = gravity_x; old_gravity_y = gravity_y;
-	for (i = 0; i < panel_count; i++) {
-		old_panels_x[i] = panels_x[i];
-		old_panels_y[i] = panels_y[i];
-	}
 }
 
 void start_battle(void) {
@@ -339,12 +333,45 @@ void start_battle(void) {
 	// スライム表示（中央上部に）
 	put_chr16(8, 2, TILE_SLIME);  // スライムキャラコード6
 	print_at(PRINT_MUL * 5, 8, battle_msg);
-	print_at(PRINT_MUL * 5, 12, "Press SPACE to attack");
+	print_at(PRINT_MUL * 5, 12, "Press 'A' to attack");
+	print_at(PRINT_MUL * 5, 14, "Press 'B' to escape");
 	wait(60);
 }
 
+void damage_battle(void) {
+	player_hp -= enemy_atk;
+	//sprintf(battle_msg, "You took %d damage! HP:%d", enemy_atk, player_hp);
+	pbattle_msg = battle_msg;
+	pbattle_msg += strcpy2(pbattle_msg, "You took ");
+	pbattle_msg += itoa2(enemy_atk, pbattle_msg);
+	pbattle_msg += strcpy2(pbattle_msg, " damage! HP:");
+	pbattle_msg += itoa2(player_hp, pbattle_msg);
+//	*pbattle_msg = '\0';
+	cls();
+	// スライム再描画（バトル継続時）
+	put_chr16(8, 2, TILE_SLIME);
+	print_at(PRINT_MUL * 5, 8, "Enemy defeated? No!");
+	print_at(PRINT_MUL * 5, 10, battle_msg);
+	if(player_hp > 0){
+		print_at(PRINT_MUL * 5, 12, "Press 'A' to attack");
+		print_at(PRINT_MUL * 5, 14, "Press 'B' to escape");
+	}else{
+		wait(60);
+		cls();
+		print_at(PRINT_MUL * 10, 10, "You dead!");
+		player_hp = 20 + 5 * level;
+		wait(60);
+		cls();
+		game_mode = 0;
+		parse_map();
+		draw_background();
+		update_objects();
+	}
+}
+
 void update_battle(void) {
-	if (keyscan() & KEY_A) {
+	keycode = keyscan();
+	if (keycode & KEY_A) {
 		enemy_hp -= player_atk;
 		if (enemy_hp <= 0) {
 			experience += 10;
@@ -354,7 +381,7 @@ void update_battle(void) {
 				experience = 0;
 				player_hp = 20 + 5 * level;
 				player_atk += 2;
-				print_at(PRINT_MUL * 5, 14, "Level Up!");
+				print_at(PRINT_MUL * 5, 16, "Level Up!");
 				wait(30);
 			}
 			cls();
@@ -366,33 +393,27 @@ void update_battle(void) {
 			draw_background();
 			update_objects();
 		} else {
-			player_hp -= enemy_atk;
-			//sprintf(battle_msg, "You took %d damage! HP:%d", enemy_atk, player_hp);
-			pbattle_msg = battle_msg;
-			pbattle_msg += strcpy2(pbattle_msg, "You took ");
-			pbattle_msg += itoa2(enemy_atk, pbattle_msg);
-			pbattle_msg += strcpy2(pbattle_msg, " damage! HP:");
-			pbattle_msg += itoa2(player_hp, pbattle_msg);
-//			*pbattle_msg = '\0';
+			damage_battle();
+		}
+		play_sound_effect();
+		wait(10);
+	} else if (keycode & KEY_B) {  // 逃げる
+		if (simple_rnd() & 0xC0) {  // 約70%成功 (192/256)
+			strcpy2(battle_msg, "Escaped!");
+			print_at(PRINT_MUL * 5, 16, battle_msg);
+			wait(60);
 			cls();
-			// スライム再描画（バトル継続時）
-			put_chr16(8, 2, TILE_SLIME);
-			print_at(PRINT_MUL * 5, 8, "Enemy defeated? No!");
-			print_at(PRINT_MUL * 5, 10, battle_msg);
-			if(player_hp > 0){
-				print_at(PRINT_MUL * 5, 12, "Press SPACE to attack");
-			}else{
-				wait(60);
-				cls();
-				print_at(PRINT_MUL * 10, 10, "You dead!");
-				player_hp = 20 + 5 * level;
-				wait(60);
-				cls();
-				game_mode = 0;
-				parse_map();
-				draw_background();
-				update_objects();
-			}
+			game_mode = 0;
+			draw_background();
+			update_objects();
+		} else {
+			player_hp -= enemy_atk;
+			strcpy2(battle_msg, "Failed to escape!");
+			print_at(PRINT_MUL * 5, 16, battle_msg);
+			wait(60);
+			cls();
+			// ... ダメージ表示
+			damage_battle();
 		}
 		play_sound_effect();
 		wait(10);

@@ -658,16 +658,16 @@ int main(void)
 
 
 	st = pd = 255;
-	while(((k9 = inp(0x09)) & 0x80)){ /* ESC */
+//	while(((k9 = inp(0x09)) & 0x80)){ /* ESC */
 //	for(;;){
 		main2();
 
-		if(fadeflag == 0){
+/*		if(fadeflag == 0){
 			fadeflag = 1;
 			if(!basic_mode)
 				fadeinblack(org_pal, 0, 3);
-		}
-	}
+		}*/
+//	}
 	if(!basic_mode){
 		fadeoutblack(org_pal, 0, 3);
 		pal_all(0, org_pal);

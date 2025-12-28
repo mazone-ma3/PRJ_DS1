@@ -9,6 +9,18 @@
 
 #include "inkey.h"
 
+#define DI() {\
+__asm\
+	di\
+__endasm;\
+}
+
+#define EI() {\
+__asm\
+	ei\
+__endasm;\
+}
+
 #define BASE_ADDRESS 0x1800
 
 enum {
@@ -120,33 +132,127 @@ void define_tiles(void) {
 	copy_to_vram(tile_hollow, (TILE_HOLLOW * 8), 8);	//	:新ブロック
 }
 
-unsigned char keycode = 0, st, tr1, tr2;
+unsigned char get_key(unsigned char matrix) __sdcccall(1)
+{
+	outp(0xaa, ((inp(0xaa) & 0xf0) | matrix));
+	return inp(0xa9);
+/*
+__asm
+	ld	a,(#0xfcc1)	; exptbl
+	ld	d,a
+	ld	e,#0
+	push	de
+	pop	iy
+	ld ix,#0x0141	; SNSMAT(MAINROM)
+
+	ld	 hl, #2
+	add	hl, sp
+	ld	a, (hl)	; a = mode
+
+	call	#0x001c	; CALSLT
+
+	ld	l,a
+	ld	h,#0
+__endasm;
+*/
+}
+
+unsigned char get_stick1(unsigned char trigno) __sdcccall(1)
+{
+__asm
+;	ld	 hl, #2
+;	add	hl, sp
+	ld	l,a
+
+	push	ix
+
+	ld	a,(#0xfcc1)	; exptbl
+	ld	d,a
+	ld	e,#0
+	push	de
+	pop	iy
+	ld ix,#0x00d5	; GTSTCK(MAINROM)
+
+;	ld	a, (hl)	; a = mode
+	ld	a,l
+
+	call	#0x001c	; CALSLT
+;	ld	l,a
+;	ld	h,#0
+
+	pop	ix
+__endasm;
+}
+
+
+unsigned char get_trigger1(unsigned char trigno) __sdcccall(1)
+{
+__asm
+;	ld	 hl, #2
+;	add	hl, sp
+	ld	l,a
+
+	push	ix
+
+	ld	a,(#0xfcc1)	; exptbl
+	ld	d,a
+	ld	e,#0
+	push	de
+	pop	iy
+	ld ix,#0x00d8	; GTTRIG(MAINROM)
+
+;	ld	a, (hl)	; a = mode
+	ld	a,l
+
+	call	#0x001c	; CALSLT
+;	ld	l,a
+;	ld	h,#0
+
+	pop	ix
+__endasm;
+}
+
+unsigned char st0, st1, pd0, pd1, pd2, k3, k5, k7, k9, k10;
+unsigned char keycode = 0;
 
 unsigned char keyscan(void)
 {
+	DI();
 	keycode = 0;
-	st = get_stick(0) | get_stick(1);
-	tr1 = get_trigger(0) | get_trigger(1);
-	tr2 = get_trigger(2);
 
-	if((st == 1)){ /* 8 */
-		keycode |= KEY_UP1;
-	}
-	if((st == 3)){ /* 6 */
-		keycode |= KEY_RIGHT1;
-	}
-	if((st == 5)){ /* 2 */
-		keycode |= KEY_DOWN1;
-	}
-	if(((st == 7))){ /* 4 */
-		keycode |= KEY_LEFT1;
-	}
-	if((tr1)){ /* X,SPACE */
+	k3 = get_key(3);
+
+	k9 = get_key(9);
+	k10 = get_key(10);
+	k5 = get_key(5);
+
+	st0 = get_stick1(0);
+	st1 = get_stick1(1);
+
+	pd0 = get_trigger1(0);
+	pd1 = get_trigger1(1);
+	pd2 = get_trigger1(3);
+
+	EI();
+
+	if((pd0) || (pd1) || !(k5 & 0x20)) /* X,SPACE */
 		keycode |= KEY_A;
-	}
-	if((tr2)){ /* C */
+	if((pd2) || !(k3 & 0x01)) /* C */
 		keycode |= KEY_B;
-	}
+	if((st0 >= 1 && st0 <=2) || (st0 == 8) || (st1 >= 1 && st1 <=2) || (st1 ==8) || !(k10 & 0x08)) /* 8 */
+		keycode |= KEY_UP1;
+	if((st0 >= 4 && st0 <=6) || (st1 >= 4 && st1 <=6) || !(k9 & 0x20)) /* 2 */
+		keycode |= KEY_DOWN1;
+
+//	if(!(st & 0x0c)){ /* RL */
+//		keycode |= KEY_START;
+//	}else{
+	if((st0 >= 6 && st0 <=8) || (st1 >= 6 && st1 <=8) || !(k9 & 0x80)) /* 4 */
+		keycode |= KEY_LEFT1;
+	if((st0 >= 2 && st0 <=4) || (st1 >= 2 && st1 <=4) || !(k10 & 0x02)) /* 6 */
+		keycode |= KEY_RIGHT1;
+//	}
+
 	return keycode;
 }
 
@@ -161,7 +267,8 @@ int main(void)
 	msx_color(15, 1, 1);
 	set_mode(1);
 
-	main2();
+	for(;;)
+		main2();
 
 	return 0;
 }
