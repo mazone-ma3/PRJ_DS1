@@ -32,4 +32,4 @@ OBJFILES = $(TARGET).o
 $(TARGET).COM : $(OBJFILES)
 	$(CC) $(LINKOPTS) $(OBJFILES)  -o $(TARGET).COM -m -v
 
-$(TARGET).o : $(TARGET).c inkey.h common.h ds1_grp.h font.h
+$(TARGET).o : $(TARGET).c inkey.h common.h ds1_88.h font88.h

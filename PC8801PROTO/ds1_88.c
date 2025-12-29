@@ -5,14 +5,14 @@
 #include <stdlib.h>
 
 #include "inkey.h"
-#include "ds1_grp.h"
-#include "font.h"
+#include "ds1_88.h"
+#include "font88.h"
 
 #define VRAM_ADR 0xc000
 #define PARTS_SIZE 0x1e00 //0x2000
 
-static unsigned char mainram_data[PARTS_SIZE];
-static unsigned char font_data[PARTS_SIZE];
+//static unsigned char mainram_data[PARTS_SIZE];
+//static unsigned char font_data[PARTS_SIZE];
 
 #define ON 1
 #define OFF 0
@@ -528,7 +528,8 @@ void put_chr8(int x, int y, char chr, char atr) {
 		return;
 
 	vram_adr = (char *)(VRAM_ADR + x + y * PARTS_Y * SIZE);
-	put_chr88_pat(vram_adr, &mainram_data[chr * PARTS_X * PARTS_Y * 3]);
+//	put_chr88_pat(vram_adr, &mainram_data[chr * PARTS_X * PARTS_Y * 3]);
+	put_chr88_pat(vram_adr, &ds1_grp[chr * PARTS_X * PARTS_Y * 3]);
 }
 
 void put_chr16(int x, int y, char chr) {
@@ -553,7 +554,8 @@ void print_at(char x, char y, char *str) {
 			chr = 0x10;
 
 		vram_adr = (char *)(VRAM_ADR + (x++) * PARTS_X + y * PARTS_Y * SIZE);
-		put_chr88_pat(vram_adr, &font_data[chr * PARTS_X * PARTS_Y * 3]);
+//		put_chr88_pat(vram_adr, &font_data[chr * PARTS_X * PARTS_Y * 3]);
+		put_chr88_pat(vram_adr, &font_grp[chr * PARTS_X * PARTS_Y * 3]);
 	}
 }
 
@@ -647,7 +649,7 @@ int main(void)
 	if(basic_mode)
 		outp(0x51, 0);
 
-	for(i = 0; i < 128; ++i){
+/*	for(i = 0; i < 128; ++i){
 		unsigned short pat_tmp = (i & 0x0f) * 2 + (i & 0xf0) * 16;
 		set_mapchr(&ds1_grp[pat_tmp * 3], &mainram_data[i * PARTS_X * PARTS_Y * 3]);
 	}
@@ -655,7 +657,7 @@ int main(void)
 		unsigned short pat_tmp = (i & 0x0f) * 2 + (i & 0xf0) * 16;
 		set_mapchr(&font_grp[pat_tmp * 3], &font_data[i * PARTS_X * PARTS_Y * 3]);
 	}
-
+*/
 
 	st = pd = 255;
 //	while(((k9 = inp(0x09)) & 0x80)){ /* ESC */
