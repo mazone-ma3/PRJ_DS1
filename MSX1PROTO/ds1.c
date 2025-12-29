@@ -51,7 +51,7 @@ void fill_vram(int size, char pattern)
 
 void beep(void)
 {
-__asm
+/*__asm
 	push	af
 	push	hl
 	push	bc
@@ -65,7 +65,7 @@ __asm
 	pop	bc
 	pop	hl
 	pop	af
-__endasm;
+__endasm;*/
 }
 
 void put_chr8(int x, int y, char chr) {
@@ -262,8 +262,11 @@ void play_sound_effect(void) {
 
 #include "common.h"
 
+#define clicksw ((unsigned char *)0xf3db)
+
 int main(void)
 {
+	*clicksw = 0;
 	msx_color(15, 1, 1);
 	set_mode(1);
 

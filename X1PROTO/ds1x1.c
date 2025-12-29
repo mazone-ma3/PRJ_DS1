@@ -4,7 +4,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+//#include <string.h>
+#include <conio.h>
 
 #include "ds1_pcg.h"
 #include "inkey.h"
@@ -90,6 +91,12 @@ void EI(void){
 __asm
 	EI
 __endasm;
+}
+
+void clearBuffer(void) {
+	while (kbhit()) {
+		getch(); // ‰Ÿ‚³‚ê‚Ä‚¢‚éƒL[‚ğ‚·‚×‚Ä“Ç‚İ”ò‚Î‚·
+	}
 }
 
 /* (24”{‘¬)PCGİ’è Œ±‚Éo‚éX1‚Ù‚Ú‚Ü‚ñ‚Ü */
@@ -995,6 +1002,8 @@ int main(void)
 
 	/* Priority */
 	outp(0x1300, 0x00);
+
+	clearBuffer();
 
 	return NOERROR;
 }

@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <conio.h>
 
 #include "inkey.h"
 #include "ds1_88.h"
@@ -62,6 +63,12 @@ void EI(void){
 __asm
 	EI
 __endasm;
+}
+
+void clearBuffer(void) {
+	while (kbhit()) {
+		getch(); // ‰Ÿ‚³‚ê‚Ä‚¢‚éƒL[‚ğ‚·‚×‚Ä“Ç‚İ”ò‚Î‚·
+	}
 }
 
 void  cls88(unsigned char color)
@@ -682,6 +689,7 @@ int main(void)
 		outp(0x51, 0x20);
 	}
 	cls();
+	clearBuffer();
 	return NOERROR;
 }
 
