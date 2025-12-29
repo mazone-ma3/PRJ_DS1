@@ -1,9 +1,9 @@
 // common.h 各機種共通ルーチン
 
 // 定数
-#define MAP_W 10
-#define MAP_H 10
-#define MAX_PANELS 10
+#define MAP_W 12
+#define MAP_H 12
+//#define MAX_PANELS 10
 #define MAX_STAGES 3
 
 // 仮想VRAM（マップの可変状態を保持）
@@ -12,39 +12,60 @@ char vram[MAP_H][MAP_W];  // 書き換え可能なマップ
 const int level_experience[10] = {0, 20, 50, 90, 140, 200, 270, 350, 440, 540};
 
 // 複数ステージ
+/*
+	"############"
+	"#....PB....#"
+	"#..........#"
+	"#..........#"
+	"#..........#"
+	"#..........#"
+	"#..........#"
+	"#..........#"
+	"#..........#"
+	"#..........#"
+	"#..........#"
+	"######G#####",
+*/
+
 const char *levels[MAX_STAGES] = {
-	"##########"
-	"#P.......#"
-	"#.###S...#"
-	"#.S...B..#"
-	"#.###H####"
-	"#.S......#"
-	"#.###H####"
-	"#........#"
-	"#........#"
-	"#####G####",
+	"############"
+	"#....PB....#"
+	"##SSS.SHS.##"
+	"##..S.S.#.##"
+	"##....S.#.##"
+	"##....S.#.##"
+	"##.SS.S.#.##"
+	"##..S.S.#.##"
+	"##..S.S.#..#"
+	"##SSS.SHS.##"
+	"#.........##"
+	"######G#####",
 
-	"##########"
-	"#P..S....#"
-	"#.###....#"
-	"#..B.S...#"
-	"#.###.####"
-	"#....S...#"
-	"#.###H####"
-	"#........#"
-	"#....,...#"
-	"#####G####",
+	"############"
+	"#.#..PB.#..#"
+	"#####.#.#..#"
+	"#.S.S...#..#"
+	"#.S.SSSH...#"
+	"#..........#"
+	"#..##...#.S#"
+	"#.S.#.S.#.H#"
+	"#.SS#...#.##"
+	"#S..#.##...#"
+	"#..S......##"
+	"######G#####",
 
-	"##########"
-	"#P.......#"
-	"#.###S####"
-	"#..B.....#"
-	"#.###H####"
-	"#........#"
-	"#.###H####"
-	"#....S...#"
-	"#........#"
-	"#####G####"
+	"############"
+	"###..PB..#.#"
+	"#..#S#S..#.#"
+	"#.......#.S#"
+	"#..#..##...#"
+	"#...##.....#"
+	"##....S.S..#"
+	"#.S###.S.S##"
+	"#..........#"
+	"###H###SSSS#"
+	"#..........#"
+	"######G#####",
 };
 
 // グローバル変数
@@ -114,9 +135,12 @@ int itoa2(int value, char *str) {
 }
 
 unsigned char simple_rnd(void) {
-	static unsigned char r = 1;
+/*	static unsigned char r = 1;
 	r = r * 37 + 41;  // 適当な定数
-	return r;
+	return r;*/
+	static unsigned char seed = 1;
+	seed = (seed * 5) + 1;
+	return seed;  // 0-255
 }
 
 int strcpy2(char *dst, char *src)
@@ -145,20 +169,20 @@ void main2(void) {
 		pbattle_msg += strcpy2(pbattle_msg, "STAGE ");
 		pbattle_msg += itoa2(current_stage+1, pbattle_msg);
 //		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 0, 20, battle_msg);
+		print_at(PRINT_MUL * 24, 0, battle_msg);
 		//sprintf(battle_msg, "LEVEL:%d", level);
 		pbattle_msg = battle_msg;
 		pbattle_msg += strcpy2(pbattle_msg, "LEVEL ");
 		pbattle_msg += itoa2(level, pbattle_msg);
 //		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 0, 21, battle_msg);
+		print_at(PRINT_MUL * 24, 1, battle_msg);
 		pbattle_msg = battle_msg;
 		//sprintf(battle_msg, "HP:%d", player_hp);
 		pbattle_msg = battle_msg;
 		pbattle_msg += strcpy2(pbattle_msg, "HP ");
 		pbattle_msg += itoa2(player_hp, pbattle_msg);
 //		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 0, 22, battle_msg);
+		print_at(PRINT_MUL * 24, 2, battle_msg);
 
 		if (game_mode == 0) {
 			gravity_fall();
@@ -176,7 +200,7 @@ void main2(void) {
 				draw_background();
 				update_objects();
 			}
-			else if (keycode && ((simple_rnd() & 0x7F) < 13)) {  // 約5% (13/128)
+			else if (keycode && ((simple_rnd() & 0x7F) < 3)) {  // 約2% (3/128)
 				start_battle();
 			}else{
 				if ((keycode & KEY_RIGHT1) && try_move(1, 0)) { wait(4); update_objects(); play_sound_effect(); }
@@ -242,9 +266,11 @@ int try_move(int dx, int dy) {
 			put_chr16(pnx, pny, TILE_NORMAL);
 		}
 	}
-	else if (can_move(nx, ny)) {
-		player_x = nx; player_y = ny;
-		return 1;
+	else if(vram[ny][nx] != 'G'){
+		if (can_move(nx, ny)) {
+			player_x = nx; player_y = ny;
+			return 1;
+		}
 	}
 	return 0;
 }
