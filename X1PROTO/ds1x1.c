@@ -777,7 +777,8 @@ void print_at(int x, int y, char *str) {
 	char chr;
 	while ((chr = *(str++)) != '\0') {
 		if (chr < 0x20) chr = 0x20;
-		put_chr8(x++, y, chr, 7);
+		put_chr8(x++, y, chr, 0x87);
+		put_chr8(x++, y, chr, 0x87);;
 	}
 }
 
@@ -791,11 +792,53 @@ void wait(int j) {
 		vsync();
 }
 
+unsigned short vram_ofs;
+#define SIZE 80
+
 void cls(void) {
 	int i,j;
-	for(j = 0l; j < 24; j++)
+/*	for(j = 0l; j < 24; j++)
 		for(i = 0; i < 80; ++i)
-			put_chr8(i, j, ' ', 0);
+			put_chr8(i, j, ' ', 0);*/
+
+	DI();
+
+__asm
+	push	bc
+	push	af
+
+	ld	bc,#0x1a03
+	ld	a,#0x0b
+	out	(c),a
+	ld	a,#0x0a
+	out	(c),a
+
+	ld	bc,0
+loop:
+;	ld	a, 0	; color
+	out	(c),0
+	inc	bc
+	ld	a,b
+	cp	#0x40
+	jr	nz,loop
+
+	pop	af
+	pop	bc
+__endasm;
+
+//	chr = inp(0);
+	inp(0);
+
+	for(j = 0; j < 25; ++j){
+		for(i = 0; i < 80; ++i){
+			vram_ofs = i + j * SIZE;
+			outp(0x3000 + vram_ofs, 0);
+			outp(0x2000 + vram_ofs, 0);
+		}
+	}
+
+	EI();
+
 }
 
 unsigned char keycode = 0;
@@ -879,10 +922,10 @@ int main(void)
 	}
 
 	/* Change Pallet */
-	outp(0x1000, 0xa2);
+/*	outp(0x1000, 0xa2);
 	outp(0x1100, 0xc4);
 	outp(0x1200, 0xf0);
-
+*/
 	/* Priority */
 	outp(0x1300, 0xfe);
 
@@ -943,6 +986,7 @@ int main(void)
 		outp(0x1fc5, 0x0);
 		outp(0x1fb0, 0x0);
 	}
+	cls();
 
 	/* Pallet */
 	outp(0x1000, 0xaa);

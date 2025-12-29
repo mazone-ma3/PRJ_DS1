@@ -679,10 +679,17 @@ void wait(int j) {
 }
 
 void cls(void) {
-	int i,j;
+/*	int i,j;
 	for(j = 0l; j < 24; j++)
 		for(i = 0; i < 80; ++i)
-			put_chr8(i, j, ' ', 0);
+			put_chr8(i, j, ' ', 0);*/
+
+	sub_disable();
+asm(
+	"LDA	#0x02	; CLSコマンド ($02)\n"
+	"STA	0xFC82	; コマンド設定エリア\n"
+);
+	sub_enable();
 }
 
 void define_tiles(void) {
@@ -770,6 +777,7 @@ asm(
 	key_clear();
 
 	main2();
+	cls();
 
 	vram_off();
 	set_key_irq();

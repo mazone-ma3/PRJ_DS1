@@ -66,6 +66,7 @@ __endasm;
 
 void  cls88(unsigned char color)
 {
+	(void)color;
 __asm
 	ld	hl, 2
 	add	hl, sp
@@ -159,7 +160,7 @@ __asm
 ;	EI
 __endasm;
 }
-
+/*
 void  set_mapchr(unsigned char *srcram, unsigned char *dstram) __sdcccall(1)
 {
 __asm
@@ -231,10 +232,12 @@ looppat11:
 	pop	hl
 
 __endasm;
-}
+}*/
 
 void  put_chr88_pat(unsigned char *vram, unsigned char *mainram) __sdcccall(1)
 {
+	(void)vram;
+	(void)mainram;
 __asm
 ;	ld	hl, 2
 ;	add	hl, sp
@@ -572,10 +575,11 @@ void wait(int j) {
 }
 
 void cls(void) {
-	int i,j;
+	cls88(0);
+/*	int i,j;
 	for(j = 0l; j < 24; j++)
 		for(i = 0; i < 80; ++i)
-			put_chr8(i, j, ' ', 0);
+			put_chr8(i, j, ' ', 0);*/
 }
 
 void define_tiles(void) {
@@ -677,6 +681,7 @@ int main(void)
 	if(basic_mode){
 		outp(0x51, 0x20);
 	}
+	cls();
 	return NOERROR;
 }
 
