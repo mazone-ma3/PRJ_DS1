@@ -21,14 +21,14 @@
 
 #define SIZE 80
 
-#define X_SIZE 18
-#define Y_SIZE 18
+//#define X_SIZE 18
+//#define Y_SIZE 18
 
 #define PARTS_X 2
 #define PARTS_Y 8
 
-#define OFS_X 2
-#define OFS_Y 2
+//#define OFS_X 2
+//#define OFS_Y 2
 
 #define CHR_X 8
 #define CHR_Y 8
