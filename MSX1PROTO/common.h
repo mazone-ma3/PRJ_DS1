@@ -264,6 +264,7 @@ int try_move(int dx, int dy) {
 			vram[pny][pnx] = 'S';
 			put_chr16(nx, ny, TILE_FLOOR);
 			put_chr16(pnx, pny, TILE_NORMAL);
+			return 1;
 		}
 	}
 	else if(vram[ny][nx] != 'G'){

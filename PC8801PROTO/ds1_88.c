@@ -34,7 +34,7 @@
 #define CHR_X 8
 #define CHR_Y 8
 
-unsigned char tmp_vram[PARTS_X * PARTS_Y * 3];
+//unsigned char tmp_vram[PARTS_X * PARTS_Y * 3];
 unsigned char basic_mode = 0;
 unsigned char *n88rom;
 unsigned char rom_mode = 0;
