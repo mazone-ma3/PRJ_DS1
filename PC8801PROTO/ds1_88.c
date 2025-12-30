@@ -9,6 +9,9 @@
 #include "ds1_88.h"
 #include "font88.h"
 
+#define A_KEY "Z"
+#define B_KEY "X"
+
 #define VRAM_ADR 0xc000
 #define PARTS_SIZE 0x1e00 //0x2000
 

@@ -176,13 +176,25 @@ void main2(void) {
 		pbattle_msg += itoa2(level, pbattle_msg);
 //		*pbattle_msg = '\0';
 		print_at(PRINT_MUL * 24, 1, battle_msg);
-		pbattle_msg = battle_msg;
 		//sprintf(battle_msg, "HP:%d", player_hp);
 		pbattle_msg = battle_msg;
 		pbattle_msg += strcpy2(pbattle_msg, "HP ");
 		pbattle_msg += itoa2(player_hp, pbattle_msg);
 //		*pbattle_msg = '\0';
 		print_at(PRINT_MUL * 24, 2, battle_msg);
+		pbattle_msg = battle_msg;
+		pbattle_msg += strcpy2(pbattle_msg, "EXP ");
+		pbattle_msg += itoa2(experience, pbattle_msg);
+//		*pbattle_msg = '\0';
+		print_at(PRINT_MUL * 24, 3, battle_msg);
+		pbattle_msg = battle_msg;
+		pbattle_msg += strcpy2(pbattle_msg, "GIVE UP");
+//		*pbattle_msg = '\0';
+		print_at(PRINT_MUL * 24, 4, battle_msg);
+		pbattle_msg = battle_msg;
+		pbattle_msg += strcpy2(pbattle_msg, A_KEY " KEY" );
+//		*pbattle_msg = '\0';
+		print_at(PRINT_MUL * 24, 5, battle_msg);
 
 		if (game_mode == 0) {
 			gravity_fall();
@@ -203,10 +215,10 @@ void main2(void) {
 			else if (keycode && ((simple_rnd() & 0x7F) < 3)) {  // 約2% (3/128)
 				start_battle();
 			}else{
-				if ((keycode & KEY_RIGHT1) && try_move(1, 0)) { wait(4); update_objects(); play_sound_effect(); }
-				if ((keycode & KEY_LEFT1) && try_move(-1, 0)) { wait(4); update_objects(); play_sound_effect(); }
-				if ((keycode & KEY_DOWN1) && try_move(0, 1)) { wait(4); update_objects(); play_sound_effect(); }
-				if ((keycode & KEY_UP1) && try_move(0, -1)) { wait(4); update_objects(); play_sound_effect(); }
+				if ((keycode == KEY_RIGHT1) && try_move(1, 0)) { wait(4); update_objects(); play_sound_effect(); }
+				if ((keycode == KEY_LEFT1) && try_move(-1, 0)) { wait(4); update_objects(); play_sound_effect(); }
+				if ((keycode == KEY_DOWN1) && try_move(0, 1)) { wait(4); update_objects(); play_sound_effect(); }
+				if ((keycode == KEY_UP1) && try_move(0, -1)) { wait(4); update_objects(); play_sound_effect(); }
 			}
 		} else {
 			update_battle();
@@ -360,8 +372,8 @@ void start_battle(void) {
 	// スライム表示（中央上部に）
 	put_chr16(8, 2, TILE_SLIME);  // スライムキャラコード6
 	print_at(PRINT_MUL * 5, 8, battle_msg);
-	print_at(PRINT_MUL * 5, 12, "Press  A  to attack");
-	print_at(PRINT_MUL * 5, 14, "Press  B  to escape");
+	print_at(PRINT_MUL * 5, 12, "Press  " A_KEY "  to attack");
+	print_at(PRINT_MUL * 5, 14, "Press  " B_KEY "  to escape");
 	wait(60);
 }
 
@@ -380,8 +392,8 @@ void damage_battle(void) {
 	print_at(PRINT_MUL * 5, 8, "Enemy defeated  No");
 	print_at(PRINT_MUL * 5, 10, battle_msg);
 	if(player_hp > 0){
-		print_at(PRINT_MUL * 5, 12, "Press  A  to attack");
-		print_at(PRINT_MUL * 5, 14, "Press  B  to escape");
+		print_at(PRINT_MUL * 5, 12, "Press  " A_KEY "  to attack");
+		print_at(PRINT_MUL * 5, 14, "Press  " B_KEY "  to escape");
 	}else{
 		wait(60);
 		cls();

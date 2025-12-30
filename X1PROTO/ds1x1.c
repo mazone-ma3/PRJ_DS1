@@ -10,6 +10,9 @@
 #include "ds1_pcg.h"
 #include "inkey.h"
 
+#define A_KEY "Z"
+#define B_KEY "X"
+
 //#define MAP_ADR 0x8000
 //#define PARTS_DATA (MAP_ADR+0x3c00)
 //#define CHRPAT_ADR 0xC000

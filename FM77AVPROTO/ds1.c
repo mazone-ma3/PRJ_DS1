@@ -5,6 +5,9 @@
 #include "ds1_grp.h"
 #include "font.h"
 
+#define A_KEY "Z"
+#define B_KEY "X"
+
 void abort(void)
 {
 	for(;;);

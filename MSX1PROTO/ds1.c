@@ -9,6 +9,9 @@
 
 #include "inkey.h"
 
+#define A_KEY "X"
+#define B_KEY "C"
+
 #define DI() {\
 __asm\
 	di\
