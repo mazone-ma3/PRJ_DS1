@@ -1,10 +1,11 @@
 // common.h 各機種共通ルーチン
+//#define DEBUG
 
 // 定数
 #define MAP_W 12
 #define MAP_H 12
 //#define MAX_PANELS 10
-#define MAX_STAGES 3
+#define MAX_STAGES 9
 
 // 仮想VRAM（マップの可変状態を保持）
 char vram[MAP_H][MAP_W];  // 書き換え可能なマップ
@@ -27,8 +28,8 @@ const int level_experience[10] = {0, 20, 50, 90, 140, 200, 270, 350, 440, 540};
 	"######G#####",
 */
 
-const char *levels[MAX_STAGES] = {
-	"############"
+static char *levels[] = {
+	"############"	// 1
 	"#....PB....#"
 	"##SSS.SHS.##"
 	"##..S.S.#.##"
@@ -41,7 +42,7 @@ const char *levels[MAX_STAGES] = {
 	"#.........##"
 	"######G#####",
 
-	"############"
+	"############"	// 2
 	"#.#..PB.#..#"
 	"#####.#.#..#"
 	"#.S.S...#..#"
@@ -54,7 +55,72 @@ const char *levels[MAX_STAGES] = {
 	"#..S......##"
 	"######G#####",
 
-	"############"
+	"############"	// 3
+	"#SS.#PB...S#"
+	"#S..#.##..S#"
+	"#SS.#.#.S.S#"
+	"#.S.#.#..#S#"
+	"#SS.###...S#"
+	"#..........#"
+	"#S..SSS.S.S#"
+	"#S#.H.#.####"
+	"##S.HSS..S.#"
+	"##..H.S..#.#"
+	"######G#####",
+
+	"############"	// 4
+	"#....PB....#"
+	"#....##....#"
+	"#........S##"
+	"#.........##"
+	"#....#...S##"
+	"#...SSS....#"
+	"#..S...S...#"
+	"#..SS.SS...#"
+	"#.#...S.#..#"
+	"###.##HHH###"
+	"######G#####",
+
+	"############"	// 5
+	"#....PB....#"
+	"#..SSSSSS..#"
+	"#.S......S.#"
+	"#.S..SS..S.#"
+	"#.S.S..S.S.#"
+	"#.S.S..S.S.#"
+	"#.S..SS..S.#"
+	"#.S......S.#"
+	"#..SSSSSS..#"
+	"#..........#"
+	"######G#####",
+
+	"############"	// 6
+	"#....PB....#"
+	"#..........#"
+	"#..........#"
+	"#.....S...H#"
+	"#...S.#.S.H#"
+	"#.S.S.#.S.H#"
+	"#.S.S.#.S.H#"
+	"#.S.S###S.H#"
+	"#.SSSSSSSSH#"
+	"#........###"
+	"######G#####",
+
+	"############" // 7
+	"#.###PB###.#"
+	"###...H...##"
+	"##..#SS#S.##"
+	"##SS....S.##"
+	"#.....#S..##"
+	"#.....S..H.#"
+	"#....SHS#..#"
+	"#..........#"
+	"#....#H#...#"
+	"#....#H#...#"
+	"######G#####",
+
+	"############"	// 8
 	"###..PB..#.#"
 	"#..#S#S..#.#"
 	"#.......#.S#"
@@ -66,6 +132,20 @@ const char *levels[MAX_STAGES] = {
 	"###H###SSSS#"
 	"#..........#"
 	"######G#####",
+
+	"############"	// 9
+	"#.S..PB##..#"
+	"#.S...H.H..#"
+	"#.S...SSS..#"
+	"#.H##.#.#..#"
+	"#..........#"
+	"##SH.#####.#"
+	"##.....#...#"
+	"####...S...#"
+	"#..#...S...#"
+	"####...S...#"
+	"######G#####",
+
 };
 
 // グローバル変数
@@ -99,10 +179,12 @@ void update_objects(void);
 void start_battle(void);
 void update_battle(void);
 
+int quotient = 0;
+int remainder = 0;
 
 int divideBy10(int n) {
-	int quotient = 0;
-	int remainder = n;
+	quotient = 0;
+	remainder = n;
 
 	while (remainder >= 10) {
 		remainder -= 10;
@@ -111,8 +193,10 @@ int divideBy10(int n) {
 	return quotient;
 }
 
+int res;
+
 int get_mod10(int n) {
-	int res;
+//	int res;
 	res = n - divideBy10(n) * 10;
 	return (res >= 10) ? res - 10 : res;
 }
@@ -143,9 +227,11 @@ unsigned char simple_rnd(void) {
 	return seed;  // 0-255
 }
 
+int size;
+
 int strcpy2(char *dst, char *src)
 {
-	int size = 0;
+	size = 0;
 	while(*src != '\0'){
 		size++;
 		*(dst++) = *(src++);
@@ -202,8 +288,13 @@ void main2(void) {
 			if(!keycode){
 				continue;
 			}
-			if (keycode & KEY_B)
+			if (keycode & KEY_B){
+#ifndef DEBUG
 				break;
+#else if
+				gravity_x = goal_x; gravity_y = goal_y-1;
+#endif
+			}
 			if (keycode & KEY_A) {
 				print_at(PRINT_MUL * 0, 23, "Give Up");
 				wait(60);
@@ -213,7 +304,9 @@ void main2(void) {
 				update_objects();
 			}
 			else if (keycode && ((simple_rnd() & 0x7F) < 3)) {  // 約2% (3/128)
+#ifndef DEBUG
 				start_battle();
+#endif
 			}else{
 				if ((keycode == KEY_RIGHT1) && try_move(1, 0)) { wait(4); update_objects(); play_sound_effect(); }
 				if ((keycode == KEY_LEFT1) && try_move(-1, 0)) { wait(4); update_objects(); play_sound_effect(); }
@@ -288,14 +381,17 @@ int try_move(int dx, int dy) {
 	return 0;
 }
 
+int nx,ny;
+char below;
+
 void gravity_fall(void) {
 	if (gravity_x == -1) return;
 
 	for(;;){
 	if (gravity_y + 1 < MAP_H) {
-		int nx = gravity_x;
-		int ny = gravity_y + 1;
-		char below = vram[ny][nx];
+		nx = gravity_x;
+		ny = gravity_y + 1;
+		below = vram[ny][nx];
 
 		if (below != '#') {
 			if (below == 'H') {
@@ -307,7 +403,7 @@ void gravity_fall(void) {
 
 				if (gravity_x == goal_x && gravity_y == goal_y) {
 					update_objects();
-					print_at(PRINT_MUL * 10, 10, "STAGE CLEAR");
+					print_at(PRINT_MUL * 6, 10, "STAGE CLEAR");
 					wait(60);
 					cls();
 					player_hp = 20 + 5 * level;
@@ -318,6 +414,7 @@ void gravity_fall(void) {
 					update_objects();
 				} else {
 					update_objects();  // 落ちた位置を更新
+					wait(1);
 				}
 			}else{
 				break;

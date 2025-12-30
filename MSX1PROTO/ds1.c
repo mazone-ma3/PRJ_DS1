@@ -1,5 +1,8 @@
 // ds1_full.c - Dragon Sword 1 Complete Prototype (MSX1 / z88dk)
 // 2025/12/26 Compiled
+#pragma output CRT_MODEL = 1
+#pragma output CRT_ORG_CODE = 0x4000 // 開始アドレス
+#pragma output CRT_SIZE_CODE = 32768 // 32KBを指定
 
 #include <msx.h>
 #include <msx/gfx.h>
@@ -222,6 +225,7 @@ __endasm;
 
 unsigned char get_stick1(unsigned char trigno) __sdcccall(1)
 {
+	(void)trigno;
 __asm
 ;	ld	 hl, #2
 ;	add	hl, sp
@@ -244,12 +248,15 @@ __asm
 ;	ld	h,#0
 
 	pop	ix
+	ret
 __endasm;
+	return 0;
 }
 
 
 unsigned char get_trigger1(unsigned char trigno) __sdcccall(1)
 {
+	(void)trigno;
 __asm
 ;	ld	 hl, #2
 ;	add	hl, sp
@@ -272,7 +279,9 @@ __asm
 ;	ld	h,#0
 
 	pop	ix
+	ret
 __endasm;
+	return 0;
 }
 
 unsigned char st0, st1, pd0, pd1, pd2, k3, k5, k7, k9, k10;
