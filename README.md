@@ -2,6 +2,8 @@
 
 This software includes code generated with the assistance of [Gemini & Grok], an AI developed by [Google & xAI].
 
+スプライトの無い機種向けに作成したゲームです。過去にMSX1で作ったゲームを元にしています。重力のついたパネルを、出てくる敵を倒したり逃げたりしつつ、ゴールまで運んでください。
+
 ・MSX1版/X1版/PC-8801版
 
 z88dk(Ver. 2.4で検証)でコンパイルしてください。実行にはX1/PC-8801はLSX-Dodgers(Gaku氏作)が必要です。別途用意してください。
