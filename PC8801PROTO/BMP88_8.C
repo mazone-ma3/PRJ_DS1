@@ -1,6 +1,7 @@
 /* Bitmap(8 colors) to PC-88 .grp Converter By m@3 */
 /* (デジタル8色) */
 /* gcc、clang等でコンパイルして下さい */
+/* BASIC用ヘッダは付けません。 */
 
 #include <stdio.h>
 #include <stdlib.h>
