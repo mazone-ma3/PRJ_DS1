@@ -1,14 +1,14 @@
 パズルRPG Dragon Sword 1 リメイク版作成実験 読み物 By m@3
 
-This software includes code generated with the assistance of [Gemini / Grok], an AI developed by [Google / xAI].
+This software includes code generated with the assistance of [Gemini & Grok], an AI developed by [Google & xAI].
 
 ・MSX1版/X1版/PC-8801版
 
-z88dkでコンパイルしてください。実行にはX1/PC-8801はLSX-Dodgersが必要です。
+z88dkでコンパイルしてください。実行にはX1/PC-8801はLSX-Dodgers(Gaku氏作)が必要です。別途用意してください。
 
 ・FM77AV版
 
-gcc6809(4.3.6 branch)でコンパイルしてください。実行にはF-BASIC V3.3が必要です。
+gcc6809(4.3.6 branch)でコンパイルしてください。実行にはF-BASIC V3.3が必要です。別途用意してください。
 
 データファイルは読みませんので実行バイナリ(とFM77AV版はBASICファイル)で動作します。MSX1版以外は起動するディスクイメージにツールで書き込んでください。
 
