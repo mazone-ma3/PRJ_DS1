@@ -4,7 +4,7 @@ This software includes code generated with the assistance of [Gemini & Grok], an
 
 ・MSX1版/X1版/PC-8801版
 
-z88dkでコンパイルしてください。実行にはX1/PC-8801はLSX-Dodgers(Gaku氏作)が必要です。別途用意してください。
+z88dk(Ver. 2.4で検証)でコンパイルしてください。実行にはX1/PC-8801はLSX-Dodgers(Gaku氏作)が必要です。別途用意してください。
 
 ・FM77AV版
 
