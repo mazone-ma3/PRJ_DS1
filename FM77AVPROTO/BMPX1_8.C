@@ -38,7 +38,7 @@
 
 #define RAM_ADR 0x2000
 
-/* 黒をシアンで出力して、X1でシアンを黒に設定する(マスクの代わり) */
+/* 黒をマゼンタで出力して、X1でマゼンタを黒に設定する(マスクの代わり) */
 /* 1色減る代わりにORを取る必要が無い */
 unsigned char cvx1_tbl[16] = { 3, 1, 2, 0, 4, 5, 6, 7, 0, 0, 0, 0 ,0 ,0 ,0 ,0 };
 
@@ -87,7 +87,7 @@ int conv(int arg, char *bitmapfil, char *grpfil, char *maskfil)
 	height = read_pattern[0x0] + 256 * (read_pattern[0x1] + 256 * (read_pattern[0x2]  +  256 * read_pattern[0x3]));
 	if((width > X1_WIDTH) || (height > (X1_HEIGHT * 2))){
 		fclose(stream[0]);
-		printf("Size over file %s.", bitmapfil);
+		printf("Size over file %s.(MAX %d x %d)", bitmapfil, X1_WIDTH, X1_HEIGHT * 2);
 		return ERROR;
 	}else{
 		printf("X Size %d / Y Size %d", width, height);
@@ -232,6 +232,9 @@ int	main(int argc,char **argv)
 {
 	if (argc < 3){
 		printf("Bitmap 8colors to X1 .grp file Converter.\n");
+		printf("Usage : %s Inputfile(Bitmap) Outputfile(X1 Graphic Data) [Outputfile(mask Data)]\n", argv[0]);
+		printf("Counting from 0, odd-numbered lines are omitted.\n");
+		printf("If no mask is specified, black and magenta will be swapped.\n");
 		return ERROR;
 	}
 

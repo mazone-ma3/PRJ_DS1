@@ -84,7 +84,7 @@ int conv(int arg, char *bitmapfil, char *savefil)
 	height = read_pattern[0x0] + 256 * (read_pattern[0x1] + 256 * (read_pattern[0x2]  +  256 * read_pattern[0x3]));
 	if((width > X1_WIDTH) || (height > (X1_HEIGHT * 2))){
 		fclose(stream[0]);
-		printf("Size over file %s.", bitmapfil);
+		printf("Size over file %s.(MAX %d x %d)", bitmapfil, X1_WIDTH, X1_HEIGHT * 2);
 		return ERROR;
 	}else{
 		printf("X Size %d / Y Size %d", width, height);
@@ -263,6 +263,8 @@ int	main(int argc,char **argv){
 
 	if (argc < 3){
 		printf("Bitmap 8colors to X1 PCG file Converter.\n");
+		printf("Usage : %s Inputfile(Bitmap) Outputfile(X1 PCG Data)\n", argv[0]);
+		printf("Counting from 0, odd-numbered lines are omitted.\n");
 		return ERROR;
 	}
 
