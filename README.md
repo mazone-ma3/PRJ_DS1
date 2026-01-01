@@ -2,7 +2,7 @@
 
 This software includes code generated with the assistance of [Gemini & Grok], an AI developed by [Google & xAI].
 
-スプライトの無い機種向けに作成したゲームです。過去にMSX1で作ったゲームを元にしています。重力のついたパネルを、出てくる敵を倒したり逃げたりしつつ、ゴールまで運んでください。
+スプライトの無い機種向けに作成したゲームです。過去にMSX1でMSX-BASICで作ったゲームを元にしています。重力のついたパネルを、出てくる敵を倒したり逃げたりしつつ、ゴールまで運んでください。
 
 MSX1版は全体のプロトタイプとして作成したので今のところ他と画面が違ったりしてます。
 
