@@ -35,6 +35,6 @@ OBJFILES = $(TARGET).o
 $(TARGET).msx : $(OBJFILES)
 #	$(CC) $(LINKOPTS) $(OBJFILES)  -o $(TARGET).COM -m -v
 #	$(CC) $(LINKOPTS2) $(OBJFILES) -o $(TARGET).bin -m
-	$(CC) $(LINKOPTS3) $(OBJFILES) -o $(TARGET).rom
+	$(CC) $(LINKOPTS3) $(OBJFILES) -o $(TARGET).rom -m
 
 $(TARGET).o : $(TARGET).c inkey.h common.h
