@@ -971,6 +971,8 @@ int main(void)
 //	if(!turbo)
 	set_key();
 
+	cls();
+
 /*	do{*/
 		main2();
 /*		if(fadeflag == 0){

@@ -676,7 +676,9 @@ int main(void)
 	st = pd = 255;
 //	while(((k9 = inp(0x09)) & 0x80)){ /* ESC */
 //	for(;;){
-		main2();
+
+	outp(0x51,0x80);
+	main2();
 
 /*		if(fadeflag == 0){
 			fadeflag = 1;
@@ -691,6 +693,8 @@ int main(void)
 	if(basic_mode){
 		outp(0x51, 0x20);
 	}
+//	outp(0x51,0x81);
+
 	cls();
 	clearBuffer();
 	return NOERROR;
