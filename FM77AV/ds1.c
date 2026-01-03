@@ -69,7 +69,7 @@ unsigned char *mmr;
 unsigned char *mem;
 unsigned char *msr;
 unsigned char msr_sv;
-unsigned char *keyport, key, st3;
+unsigned char *keyport, key, st3 = 0;
 
 #define OPNCOM 0xFD15
 #define OPNDAT 0xFD16
@@ -176,6 +176,7 @@ unsigned char keycode2, keyflag;
 
 void  key_sense(void)
 {
+//		for(;;);
 //	unsigned char keycode2 = 0, old_keycode = 0;
 //	while((keycode = *keyport) != old_keycode){
 		keycode2 = *keyport;
@@ -225,6 +226,12 @@ asm(
 	"stx		_IRQJP\n"
 	"ldx		#_IRQET\n"
 	"stx		0x0FFF8\n"
+
+	"lda		0xFD03\n"
+	"anda	#0x01\n"
+	"ora	#1\n"
+	"sta		0xFD02\n"
+
 	"bra	_ENDIRQ\n"
 "_TCLOSE:\n"
 	"ldx		_IRQJP\n"
@@ -232,15 +239,19 @@ asm(
 	"bra	_ENDIRQ\n"
 
 "_IRQET:\n"
+	";rti\n"
+	";jmp		[_IRQJP]\n"
+
 	"pshs	D,X\n"
 	"lda		0xFD03\n"
 	"anda	#1\n"
-	"beq		_IRQRT\n"
+	";beq		_IRQRT\n"
 
 	"jsr	_key_sense\n"
 
 "_IRQRT:\n"
 	"puls	D,X\n"
+	"rti\n"
 	"jmp		[_IRQJP]\n"
 
 "_IRQJP:	.blkb	2\n"
@@ -270,7 +281,7 @@ asm(
 asm(
 	"lda	0xfd93\n"
 	"sta	_msr_sv\n"
-	"ora	#0x80\n"
+	";ora	#0x80\n"
 	"sta	0xfd93\n"
 );
 //	*msr |= 0x80;
@@ -603,7 +614,7 @@ unsigned short old_x = 255, old_y = 255;
 unsigned short x = 165, y = 30;
 unsigned char old_map_data[(X_SIZE + 2) * 32];
 */
-unsigned char k0, k1, k2, k3, st, st2;
+unsigned char k0, k1, k2, k3, st, st2 = 0;
 
 //unsigned short xx, yy;
 //unsigned char k;
@@ -682,10 +693,12 @@ void wait(int j) {
 }
 
 void cls(void) {
-/*	int i,j;
-	for(j = 0l; j < 24; j++)
+//	return;
+	int i,j;
+/*	for(j = 0l; j < 24; j++)
 		for(i = 0; i < 80; ++i)
 			put_chr8(i, j, ' ', 0);*/
+//	return;
 
 	sub_disable();
 asm(
@@ -752,6 +765,13 @@ asm(
 
 int main(void)
 {
+asm(
+	"LDS  #0x7FFF    ; ハードウェアスタックを$7FFFに設定\n"
+	"LDU  #0x7F00\n"
+	"lda #1\n"
+	"sta 0xfd13\n	;サブモニタROMをAに"
+);
+
 	mmr = (unsigned char *)0xFD80;
 	mem = (unsigned char *)0x6AFF;
 	msr = (unsigned char *)0xFD93;
@@ -772,6 +792,8 @@ asm(
 );
 
 	st3 = 0;
+	st2 = 0;
+	keycode = 0;
 
 	keyscan_on();
 	keyrepeat_off();
@@ -779,7 +801,8 @@ asm(
 
 	key_clear();
 
-	main2();
+	for(;;)
+		main2();
 	cls();
 
 	vram_off();
@@ -787,6 +810,7 @@ asm(
 	keyrepeat_on();
 	keyscan_off();
 	key_clear();
+
 	return 0;
 }
 
