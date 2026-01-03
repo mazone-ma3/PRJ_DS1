@@ -25,14 +25,15 @@ LINKOPTS3 = +msx -create-app -subtype=rom -lmsxbios
 
 #ê∂ê¨éËèá
 
-all:$(TARGET).msx
+all:$(TARGET).rom
+#msx
 
 clean:
 	rm $(TARGET).o $(TARGET).rom
 
 OBJFILES = $(TARGET).o
 
-$(TARGET).msx : $(OBJFILES)
+$(TARGET).rom : $(OBJFILES)
 #	$(CC) $(LINKOPTS) $(OBJFILES)  -o $(TARGET).COM -m -v
 #	$(CC) $(LINKOPTS2) $(OBJFILES) -o $(TARGET).bin -m
 	$(CC) $(LINKOPTS3) $(OBJFILES) -o $(TARGET).rom -m

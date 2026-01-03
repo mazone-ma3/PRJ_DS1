@@ -106,9 +106,9 @@ void put_chr8(int x, int y, char chr) {
 void put_chr16(int x, int y, char chr) {
 	switch(chr){
 		case TILE_PLAYER:
-			vdp_put_sprite_16(0,x*16, y*16, 0,5);
+			vdp_put_sprite_16(0,x*16, y*16, 0,7);
 			vdp_put_sprite_16(1,x*16, y*16, 4,10);
-			vdp_put_sprite_16(2,x*16, y*16, 8,7);
+			vdp_put_sprite_16(2,x*16, y*16, 8,5);
 			break;
 
 		case TILE_SLIME:

@@ -28,24 +28,23 @@ CFLAGS = -c
 	gcc $*.c -o $*.exe
 
 #生成手順
-OBJNAME = $(TARGET)
 
-all:$(OBJNAME).d77
+all:$(TARGET).d77
 
 clean:
 	rm $(TARGET).rel $(TARGET).d77 ipl.bin
 
-OBJFILES = crt0.rel $(OBJNAME).rel
+OBJFILES = crt0.rel $(TARGET).rel
 # /usr/local/lib/gcc/m6809-unknown-none/4.3.6/crt0.o
 LIBPATH = /usr/local/lib/gcc/m6809-unknown-none/4.3.6/
 
 $(TARGET).d77 : $(OBJFILES) ipl.bin create.exe
 #fm7conv.exe 
-#	aslink -b .text=0x1600 -m $(OBJNAME).map  $(OBJFILES) -s $(OBJNAME).s -l $(LIBPATH)libgcc.a
-	aslink -b .text=0x1600 -m $(OBJNAME).map  $(OBJFILES) -s -l $(LIBPATH)libgcc.a
-	objcopy -I srec -O binary $(OBJNAME).s19 $(OBJNAME).bin
-#	fm7conv $(OBJNAME).bin $(OBJNAME).b77
-	create $(OBJNAME).d77 ipl.bin 1 ds1.bin 2
+#	aslink -b .text=0x1600 -m $(TARGET).map  $(OBJFILES) -s $(TARGET).s -l $(LIBPATH)libgcc.a
+	aslink -b .text=0x1600 -m $(TARGET).map  $(OBJFILES) -s -l $(LIBPATH)libgcc.a
+	objcopy -I srec -O binary $(TARGET).s19 $(TARGET).bin
+#	fm7conv $(TARGET).bin $(TARGET).b77
+	create $(TARGET).d77 ipl.bin 1 $(TARGET).bin 2
 
 $(TARGET).rel : $(TARGET).c common.h inkey.h ds1_grp.h font.h
 ipl.bin : ipl.s

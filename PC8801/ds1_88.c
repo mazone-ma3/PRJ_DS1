@@ -661,7 +661,7 @@ int main(void)
 //	Set_RAM_MODE();
 
 	if(basic_mode)
-		outp(0x51, 0);
+		outp(0x51, 0);	/* Text Off */
 
 /*	for(i = 0; i < 128; ++i){
 		unsigned short pat_tmp = (i & 0x0f) * 2 + (i & 0xf0) * 16;
@@ -674,11 +674,11 @@ int main(void)
 */
 
 	st = pd = 255;
-//	while(((k9 = inp(0x09)) & 0x80)){ /* ESC */
-//	for(;;){
+	outp(0x51,0x80);	/* Cursor Off */
 
-	outp(0x51,0x80);
-	main2();
+//	while(((k9 = inp(0x09)) & 0x80)){ /* ESC */
+	for(;;) //{
+		main2();
 
 /*		if(fadeflag == 0){
 			fadeflag = 1;

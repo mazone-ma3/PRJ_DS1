@@ -974,6 +974,7 @@ int main(void)
 	cls();
 
 /*	do{*/
+	for(;;)
 		main2();
 /*		if(fadeflag == 0){
 			fadeflag = 1;
