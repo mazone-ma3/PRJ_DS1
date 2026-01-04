@@ -842,8 +842,8 @@ __endasm;
 	for(j = 0; j < 25; ++j){
 		for(i = 0; i < 80; ++i){
 			vram_ofs = i + j * SIZE;
-			outp(0x3000 + vram_ofs, 0);
 			outp(0x2000 + vram_ofs, 0);
+			outp(0x3000 + vram_ofs, 0);
 		}
 	}
 

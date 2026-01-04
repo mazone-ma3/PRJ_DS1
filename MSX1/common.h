@@ -284,6 +284,7 @@ void main2(void) {
 
 		if (game_mode == 0) {
 			gravity_fall();
+			vsync();
 			keycode = keyscan();
 			if(!keycode){
 				continue;
@@ -316,7 +317,6 @@ void main2(void) {
 		} else {
 			update_battle();
 		}
-		vsync();
 	}
 }
 
@@ -414,7 +414,7 @@ void gravity_fall(void) {
 					update_objects();
 				} else {
 					update_objects();  // 落ちた位置を更新
-					wait(1);
+					wait(2);
 				}
 			}else{
 				break;
@@ -446,7 +446,7 @@ void update_objects(void) {
 	static int i;
 
 	// 前の位置を床に戻す
-	if (old_player_x >= 0) put_chr16(old_player_x , old_player_y, TILE_FLOOR);
+	if ((old_player_x != player_x) || (old_player_y != player_y)) put_chr16(old_player_x , old_player_y, TILE_FLOOR);
 	if ((old_gravity_x != gravity_x) || (old_gravity_y != gravity_y)) put_chr16(old_gravity_x, old_gravity_y, TILE_FLOOR);
 
 	// 新しい位置に描画
@@ -463,7 +463,7 @@ void update_objects(void) {
 void start_battle(void) {
 	game_mode = 1;
 	enemy_hp = 10 + (level - 1) * 5;
-	enemy_atk = 3 + (level - 1) * 2;
+	enemy_atk = 3 + ((level - 1) * 3 / 2);
 	strcpy2(battle_msg, "Slime appeared");
 	cls();
 	// スライム表示（中央上部に）
@@ -534,7 +534,7 @@ void update_battle(void) {
 		play_sound_effect();
 		wait(10);
 	} else if (keycode & KEY_B) {  // 逃げる
-		if (simple_rnd() & 0xC0) {  // 約70%成功 (192/256)
+		if (simple_rnd() & 0xE0) {  // 約87%成功 (224/256)
 			strcpy2(battle_msg, "Escaped");
 			print_at(PRINT_MUL * 5, 16, battle_msg);
 			wait(60);

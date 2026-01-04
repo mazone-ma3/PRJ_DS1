@@ -506,7 +506,6 @@ asm(
 	"lda 2,x\n"
 	"ldb 5,x\n"
 	"std 0x8000,u\n"
-
 	"leax 6,x\n"
 	"leau 80,u\n"
 
