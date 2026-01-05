@@ -1,54 +1,47 @@
-﻿# ds1.d77 makefile for FM77AV GCC (gcc6809 4.3.6 branch)
+﻿# --- 設定 ---
+TARGET  = ds1
+CC      = m6809-unknown-none-gcc-4.3.6
+AS      = as6809
+LD      = aslink
+OBJCOPY = objcopy
 
-TARGET = ds1
+CFLAGS  = -c
+LIBPATH = /usr/local/lib/gcc/m6809-unknown-none/4.3.6/
+LDFLAGS = -b .text=0x1600 -s -l $(LIBPATH)libgcc.a
 
-#マクロ
-CC = m6809-unknown-none-gcc-4.3.6
+# 生成される中間ファイルなどをまとめて定義
+OBJFILES = crt0.rel $(TARGET).rel
 
-CFLAGS = -c
-#-S
+# --- ルール ---
 
-.SUFFIXES: .rel .s
-.s.rel:
-	as6809 -l -o $*.rel  $*.s
+all: $(TARGET).d77
 
-.SUFFIXES: .rel .c
-.c.rel:
-	$(CC) $(CFLAGS) $< -o $*.rel
-#	as6809 -l -o $*.rel  $*.s
+# 1. パターンルールによる簡略化
+%.rel: %.c
+	$(CC) $(CFLAGS) $< -o $@
 
-.SUFFIXES: .bin .s
-.s.bin:
-	as6809 -l -o $*.rel  $*.s
-	aslink -b .text=0x0100 -m $*.map  $*.rel -s
-	objcopy -I srec -O binary $*.s19 $*.bin
+%.rel: %.s
+	$(AS) -l -o $@ $<
 
-.SUFFIXES: .exe .c
-.c.exe:
-	gcc $*.c -o $*.exe
+# 2. ホストPC（gcc）用ビルドのルール
+%.exe: %.c
+	gcc $< -o $@
 
-#生成手順
+# 3. ipl.bin の生成ルール
+ipl.bin: ipl.s
+	$(AS) -l -o ipl.rel $<
+	$(LD) -b .text=0x0100 -m ipl.map ipl.rel -s
+	$(OBJCOPY) -I srec -O binary ipl.s19 $@
 
-all:$(TARGET).d77
+# 4. メインターゲット
+$(TARGET).d77: $(OBJFILES) ipl.bin create.exe
+	$(LD) -m $(TARGET).map $(OBJFILES) $(LDFLAGS)
+	$(OBJCOPY) -I srec -O binary $(TARGET).s19 $(TARGET).bin
+	./create $(TARGET).d77 ipl.bin 1 $(TARGET).bin 2
+
+# 依存関係
+$(TARGET).rel: $(TARGET).c common.h inkey.h ds1_grp.h font.h
+crt0.rel: crt0.s
 
 clean:
-	rm $(TARGET).rel $(TARGET).d77 ipl.bin
-
-OBJFILES = crt0.rel $(TARGET).rel
-# /usr/local/lib/gcc/m6809-unknown-none/4.3.6/crt0.o
-LIBPATH = /usr/local/lib/gcc/m6809-unknown-none/4.3.6/
-
-$(TARGET).d77 : $(OBJFILES) ipl.bin create.exe
-#fm7conv.exe 
-#	aslink -b .text=0x1600 -m $(TARGET).map  $(OBJFILES) -s $(TARGET).s -l $(LIBPATH)libgcc.a
-	aslink -b .text=0x1600 -m $(TARGET).map  $(OBJFILES) -s -l $(LIBPATH)libgcc.a
-	objcopy -I srec -O binary $(TARGET).s19 $(TARGET).bin
-#	fm7conv $(TARGET).bin $(TARGET).b77
-	create $(TARGET).d77 ipl.bin 1 $(TARGET).bin 2
-
-$(TARGET).rel : $(TARGET).c common.h inkey.h ds1_grp.h font.h
-ipl.bin : ipl.s
-crt0.rel : crt0.s
-
-#fm7conv.exe : fm7conv.c
-create.exe : create.c
+	rm -f *.rel *.bin *.d77 *.map *.s19 *.exe

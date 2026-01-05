@@ -1,41 +1,32 @@
-# ds1x1.d88 makefile for X1 z88dk
+﻿# --- 設定 ---
+TARGET   = ds1x1
+CC       = zcc
 
-TARGET = ds1x1
+# PC-8801用フラグ (SDCC, 速度優先, 引数渡しをsdcccall0に固定)
+CFLAGS   = +x1 -compiler sdcc --opt-code-speed --sdcccall0
+LDFLAGS  = +x1 -create-app -lm
 
-#�}�N��
-CC= zcc
+# 中間ファイル
+OBJS     = $(TARGET).o
 
-#CFLAGS = +cpm -compiler sccz80 --opt-code-speed
-#CFLAGS = +cpm -compiler sdcc --opt-code-speed --sdcccall0
-CFLAGS = +x1 -compiler sdcc --opt-code-speed --sdcccall0
-# --opt-code-size
-# --sdcccall0
-# -DNODLAY -lm
+# --- ルール ---
 
-LINKOPTS = +cpm -create-app -lm
-LINKOPTS2 = +x1 -create-app -lm
-# -vn
+all: $(TARGET).d88
 
-# C�\�|�X����obj�쐬
+# 1. パターンルール
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
 
-.SUFFIXES: .o .c
-.c.o:
-	$(CC) $(CFLAGS) $< -c
+# 2. メインターゲット (D88ファイル生成)
+$(TARGET).d88: $(OBJS)
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) -m -v
 
-#�����菇
+# 依存関係
+$(TARGET).o: $(TARGET).c inkey.h common.h ds1_pcg.h
 
-all:$(TARGET).d88
-#COM
+# 3. おまけ：CPM版もテストしたい場合
+cpm: $(OBJS)
+	$(CC) +cpm -create-app -o $(TARGET).COM $(OBJS) -lm
 
 clean:
-	rm $(TARGET).o  $(TARGET).d88
-#$(TARGET).COM
-
-OBJFILES = $(TARGET).o
-
-#$(TARGET).COM : $(OBJFILES)
-$(TARGET).d88 : $(OBJFILES)
-#	$(CC) $(LINKOPTS) $(OBJFILES)  -o $(TARGET).COM -m -v
-	$(CC) $(LINKOPTS2) $(OBJFILES)  -o $(TARGET).d88 -m -v
-
-$(TARGET).o : $(TARGET).c inkey.h common.h ds1_pcg.h
+	rm -f *.o *.d88 *.map *.COM *.ihx

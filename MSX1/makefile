@@ -1,41 +1,36 @@
-# ds1.rom makefile for MSX1 z88dk
+﻿# --- 設定 ---
+TARGET   = ds1
+CC       = zcc
 
-TARGET = ds1
+# コンパイルオプション（SDCCを使用）
+CFLAGS   = +msx -compiler sdcc --opt-code-speed --sdcccall0
+# リンクオプション（subtypeで切り替え）
+LDFLAGS  = +msx -create-app -lmsxbios
 
-#�}�N��
-CC= zcc
+# 中間ファイル
+OBJS     = $(TARGET).o
 
-#CFLAGS = +msx -compiler sccz80 --opt-code-speed
-CFLAGS = +msx -compiler sdcc --opt-code-speed --sdcccall0
-# --opt-code-size
-# --sdcccall0
-# -DNODLAY -lm
+# --- ルール ---
 
-LINKOPTS = +msx -create-app -subtype=msxdos -lndos -lmsxbios -DMALLOC
-#LINKOPTS = +cpm -create-app
-LINKOPTS2 = +msx -create-app -subtype=disk -zorg=0x83c0  -lmsxbios
-LINKOPTS3 = +msx -create-app -subtype=rom -lmsxbios
-# -vn -lm 
+all: $(TARGET).rom
 
-# C�\�|�X����obj�쐬
+# 1. パターンルール（.c から .o を作成）
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
 
-.SUFFIXES: .o .c
-.c.o:
-	$(CC) $(CFLAGS) $< -c
+# 2. ROM生成ルール
+$(TARGET).rom: $(OBJS)
+	$(CC) $(LDFLAGS) -subtype=rom -o $(TARGET) $(OBJS) -m -v
 
-#�����菇
+# 3. (おまけ) DOS用COMファイルやBINも作りたい場合
+com: $(OBJS)
+	$(CC) $(LDFLAGS) -subtype=msxdos -lndos -o $(TARGET).com $(OBJS)
 
-all:$(TARGET).rom
-#msx
+bin: $(OBJS)
+	$(CC) $(LDFLAGS) -subtype=disk -zorg=0x83c0 -o $(TARGET).bin $(OBJS)
+
+# 依存関係
+$(TARGET).o: $(TARGET).c inkey.h common.h
 
 clean:
-	rm $(TARGET).o $(TARGET).rom
-
-OBJFILES = $(TARGET).o
-
-$(TARGET).rom : $(OBJFILES)
-#	$(CC) $(LINKOPTS) $(OBJFILES)  -o $(TARGET).COM -m -v
-#	$(CC) $(LINKOPTS2) $(OBJFILES) -o $(TARGET).bin -m
-	$(CC) $(LINKOPTS3) $(OBJFILES) -o $(TARGET).rom -m
-
-$(TARGET).o : $(TARGET).c inkey.h common.h
+	rm -f *.o *.rom *.map *.com *.bin *.map *.ihx *.cas
