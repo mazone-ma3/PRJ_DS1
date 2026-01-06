@@ -22,6 +22,8 @@ gcc6809(4.3.6 branch)でコンパイルしてください。直接.d77を生成�
 
 各コンバータの説明はコンバータのソースを参照してください。
 
+Pyxel版もWebの方にあります。
+
 ↓WebMSXでMSX1版を実行
 
 https://webmsx.org/cbios/?MACHINE=MSX1J&rom=https://github.com/mazone-ma3/PRJ_DS1/raw/refs/heads/main/MSX1/BIN/ds1.rom
