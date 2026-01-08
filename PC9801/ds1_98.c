@@ -789,7 +789,9 @@ void main_c(void)
 
 //	term_v_sync();
 
+	cls();
 	outp(0x62,0x0d);	/**Text ON */
+	key_flash();
 
 	end();
 }
