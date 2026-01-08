@@ -8,7 +8,7 @@
 #define MAX_STAGES 9
 
 // 仮想VRAM（マップの可変状態を保持）
-char vram[MAP_H][MAP_W];  // 書き換え可能なマップ
+static char vram[MAP_H][MAP_W];  // 書き換え可能なマップ
 
 const int level_experience[10] = {0, 20, 50, 90, 140, 200, 270, 350, 440, 540};
 
@@ -28,7 +28,7 @@ const int level_experience[10] = {0, 20, 50, 90, 140, 200, 270, 350, 440, 540};
 	"######G#####",
 */
 
-static char *levels[] = {
+const char *levels[] = {
 	"############"	// 1
 	"#....PB....#"
 	"##SSS.SHS.##"
@@ -206,14 +206,17 @@ int itoa2(int value, char *str) {
 	char *p = str;
 	int tmp = value;
 	int size = 0;
+	char *start;
+	char t;
+
 	if (value <= 0) { *p++ = '0'; *p = '\0'; return 0; }
 	while (tmp) { *p++ = '0' + get_mod10(tmp); tmp = divideBy10(tmp); }
 	*p-- = '\0';
 	// 逆転
-	char *start = str;
+	start = str;
 	while (start < p) {
 		size++;
-		char t = *start; *start++ = *p; *p-- = t;
+		t = *start; *start++ = *p; *p-- = t;
 	}
 	return size;
 }
@@ -249,7 +252,9 @@ void main2(void) {
 	draw_background();
 	update_objects();
 
-	while (1) {
+	for (;;) {
+//		print_at(PRINT_MUL * 24, 10,"012345678");
+//		print_at(PRINT_MUL * 24, 11,"ABCDEFG");
 		//sprintf(battle_msg, "STAGE:%d", current_stage+1);
 		pbattle_msg = battle_msg;
 		pbattle_msg += strcpy2(pbattle_msg, "STAGE ");
