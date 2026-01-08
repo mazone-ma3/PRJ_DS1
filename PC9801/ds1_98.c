@@ -774,6 +774,7 @@ void main_c(void)
 
 	InitJoystick(1);
 
+	outp(0x62,0x0c);	/**Text OFF */
 	cls();
 
 #ifdef DEBUG2
