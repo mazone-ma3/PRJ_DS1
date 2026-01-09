@@ -284,6 +284,13 @@ void wait_vsync(void)
 	do{
 		outp(0x440, 30);
 	}while(!(inp(0x0443) & 0x04)); /* “®ì’† */
+#ifndef DEBUG2
+_asm{
+	mov	ah,06h
+	mov	al,00h	;key buffer clear
+	int	90h
+}
+#endif
 }
 
 void sys_wait(unsigned char wait)
