@@ -81,7 +81,7 @@ loop2:
 	mov	 es, ax
 	xor	 di, di
 	mov	 cx, 4000h	   ; 16K words = 32KB
-	mov	 ax, 0fFfFh	   ; 青（16色モード想定、実際は256色なら0F0F0F0Fhなど）
+	mov	 ax, 0fFfFh
 	rep	 stosw
 
 ;	jmp	loop2
