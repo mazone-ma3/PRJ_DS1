@@ -59,12 +59,7 @@ boot:
 	mov	 sp, 0B000h	  ; ロード領域の下にスタック
 	sti
 
-	; 最小CRTC初期化（レイヤー0 visibleにする程度）
-;	mov	 dx, 440h
-;	mov	 ax, 0001h	   ; 例: レイヤー0有効化（実際はモデル依存）
-;	out	 dx, ax
-
-	; 画面FILL (VRAM C0000h - DFFFFh を青で塗りつぶし)
+	; 画面FILL (VRAM C0000h - を青で塗りつぶし)
 	mov	al,000h	; VRAM
 	mov dx,0404h
 	out	dx,al
