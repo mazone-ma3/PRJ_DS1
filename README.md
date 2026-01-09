@@ -6,6 +6,8 @@ This software includes code generated with the assistance of [Gemini & Grok], an
 
 MSX1版は全体のプロトタイプとして作成したので今のところ他と画面が違ったりしてます。→寄せてみました。
 
+何故かIPL起動実験の続き(実践編)になってます。
+
 ・MSX1版/X1版/PC-8801版
 
 z88dk(Ver. 2.4で検証)でコンパイルしてください。X1版/PC-8801版は直接.d88を生成するように修正しました。
