@@ -1,7 +1,4 @@
-﻿; FD_IPL_WAT.ASM - Minimal FM TOWNS FD IPL for OpenWatcom WASM
-; Assemble: wasm FD_IPL_WAT.ASM
-; Link:	 wlink name FD_IPL.BIN form raw bin file FD_IPL_WAT.OBJ
-; (or use wlink option file with OP map, OP raw etc.)
+﻿; Minimal FM TOWNS FD IPL for OpenWatcom WASM
 ; 参考 Free TOWNSOS / iosys / FD_IPL.NSM
 
 
