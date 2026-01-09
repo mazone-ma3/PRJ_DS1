@@ -5,8 +5,8 @@ AS       = wasm
 LD       = wlink
 
 # CFLAGS: -ms: Smallモデル, -0: 8086用, -os: サイズ最適化, -zl: ライブラリ参照削除, -fpc: 数学ライブラリ不要
-CFLAGS   = -ms -3 -os -zp1 -zl -fpc -s -zc
-ASFLAGS  = -ms -0
+CFLAGS   = -ms -1 -os -zp1 -zl -fpc -s -zc
+ASFLAGS  = -ms -1
 
 # 中間ファイル
 OBJS     = $(TARGET).obj
@@ -26,7 +26,7 @@ all: $(TARGET).xdf
 
 # 3. iplのルール (.asm -> .bin)
 townsipl.bin : townsipl.asm
-	$(AS) $(ASFLAG) -fo=townsipl.obj townsipl.asm
+	$(AS) -fo=townsipl.obj townsipl.asm
 	$(LD) file townsipl.obj name townsipl.bin form raw
 
 # 4. リンク工程

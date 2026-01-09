@@ -62,7 +62,19 @@ _asm{
 	sti
 }
 }
+//#else
 #endif
+
+void outpm(int offset, int adr, char data)
+{
+	unsigned char __far *p = MK_FP(offset, adr);
+	*p = data;
+}
+/*void outpm(int offset, int adr, int data)
+{
+	outp(adr, data);
+}
+*/
 
 void put_str(char x, char y, char *str)
 {
@@ -112,13 +124,13 @@ unsigned char mapdata[BUFFSIZE];
 /* R G B */
 unsigned char org_pal[MAXCOLOR][3] = {
 	{  0,  0,  0},
-	{  0,  0, 15},
-	{ 15,  0,  0},
-	{ 15,  0, 15},
-	{  0, 15,  0},
-	{  0, 15, 15},
-	{ 15, 15,  0},
-	{ 15, 15, 15},
+	{  0,  0,  7},
+	{  7,  0,  0},
+	{  7,  0,  7},
+	{  0,  7,  0},
+	{  0,  7,  7},
+	{  7,  7,  0},
+	{  7,  7,  7},
 	{  0,  0,  0},
 	{  0,  0, 15},
 	{ 15,  0,  0},
@@ -178,16 +190,16 @@ void put_8(unsigned short x, unsigned short y, unsigned short no)
 			= 0;
 */
 		w = MK_FP(0xc000,c);
-		outp(0xff81, 1);
+		outpm(0xc000, 0x0ff81, 1);
 		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*0];
-		outp(0xff81, 2);
+		outpm(0xc000, 0xff81, 2);
 		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*1];
-		outp(0xff81, 4);
+		outpm(0xc000, 0xff81, 4);
 		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*2];
-		outp(0xff81, 8);
+		outpm(0xc000, 0xff81, 8);
 		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2];
 	}
@@ -211,16 +223,16 @@ void put_8_font(unsigned short x, unsigned short y, unsigned short no)
 			= 0;
 */
 		w = MK_FP(0xc000,c);
-		outp(0xff81, 1);
+		outpm(0xc000, 0xff81, 1);
 		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*0];
-		outp(0xff81, 2);
+		outpm(0xc000, 0xff81, 2);
 		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*1];
-		outp(0xff81, 4);
+		outpm(0xc000, 0xff81, 4);
 		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*2];
-		outp(0xff81, 8);
+		outpm(0xc000, 0xff81, 8);
 		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2];
 	}
@@ -255,7 +267,7 @@ void clear(unsigned short type)
 		for (i = 0; i < 80 * 400; i++){
 			w = MK_FP(0xc000,i);
 
-			outp(0xff81, 0x0f);
+			outpm(0xc000, 0xff81, 0x0f);
 			*((unsigned short __far *)(unsigned char __far *)(w))
 				 = 0;
 		}
@@ -270,6 +282,52 @@ void clear(unsigned short type)
 void pal_set(unsigned char pal_no, unsigned short color, unsigned char red, unsigned char green,
 	unsigned char blue)
 {
+	int palram;
+/*	switch(pal_no){
+		case CHRPAL_NO:
+//			_Far unsigned short *palram;
+
+//			_FP_SEG(palram) = 0x130;
+//			_FP_OFF(palram) = 0x2000;
+			palram = 0x2000;
+
+			green = ((green + 1)*2-1)*(green!=0);
+			blue = ((blue + 1)*2-1)*(blue!=0);
+			red = ((red + 1)*2-1)*(red!=0);
+
+//			palram[color] = green * 32 * 32 + red * 32 + blue;
+			_poke_word(0x130, palram + color * 2,  green * 32 * 32 + red * 32 + blue);
+			break;
+
+		case BGPAL_NO:
+*/			green = ((green + 1)*16-1)*(green!=0);
+			blue = ((blue + 1)*16-1)*(blue!=0);
+			red = ((red + 1)*16-1)*(red!=0);
+
+			outp(0x448,0x01);
+			outp(0x44a,0x01);	/* priority register */
+
+			outp(0xfd90, color);
+			outp(0xfd92, blue);
+			outp(0xfd94, red);
+			outp(0xfd96, green);
+/*			break;
+
+		case REVPAL_NO:
+//			_Far unsigned short *palram;
+
+//			_FP_SEG(palram) = 0x130;
+//			_FP_OFF(palram) = 0x2000;
+			palram = 0x2000+32;
+
+			green = ((green + 1)*2-1)*(green!=0);
+			blue = ((blue + 1)*2-1)*(blue!=0);
+			red = ((red + 1)*2-1)*(red!=0);
+
+//			palram[color] = green * 32 * 32 + red * 32 + blue;
+			_poke_word(0x130, palram + color * 2,  green * 32 * 32 + red * 32 + blue);
+			break;
+	}*/
 }
 
 /*‚’¼“¯Šú‘Ò‚¿*/
@@ -656,7 +714,7 @@ __asm{
 }
 */
 
-//	pal_all(0, org_pal);
+	pal_all(0, org_pal);
 //	set_constrast(0, org_pal, 0);
 
 	outp(0x448,0);

@@ -56,6 +56,48 @@ boot:
 	mov	 sp, 0B000h	  ; ロード領域の下にスタック
 	sti
 
+	jmp	read
+
+	mov	dx,0fda0h
+	xor	al,al
+	out	dx,al
+
+	mov	si,offset crtcinitdata
+	mov	cx,32
+
+loops:
+	mov	al,32
+	sub	al,cl
+	mov	dx,440h
+	out	dx,al
+	mov	ax,[si]
+	add	dx,2
+	out	dx,ax
+	add	si,2
+	loop	loops
+
+	mov	dx,448h
+	xor	al,al
+	out	dx,al
+	add	dx,2
+	mov	al,15h
+	out	dx,al
+
+	mov	dx,448h
+	mov	al,1
+	out	dx,al
+	add	dx,2
+	mov	al,09h
+	out	dx,al
+
+	mov	dx,0fda0h
+	mov	al,8
+	out	dx,al
+
+;	mov	dx,0ffa0h
+;	mov	al,0
+;	out	dx,al
+
 	; 画面FILL (VRAM C0000h - を青で塗りつぶし)
 	mov	al,000h	; VRAM
 	mov dx,0404h
@@ -65,7 +107,7 @@ boot:
 	mov	dx,0ff82h
 	out	dx,al
 
-	mov	al,00000001b	; C0 plane write
+	mov	al,00001111b	; All plane write
 	mov	dx,0ff81h
 	out	dx,al
 
@@ -78,11 +120,12 @@ loop2:
 	mov	 es, ax
 	xor	 di, di
 	mov	 cx, 4000h	   ; 16K words = 32KB
-	mov	 ax, 0fFfFh
+	mov	 ax, 0h ;fFfFh
 	rep	 stosw
 
 ;	jmp	loop2
 
+read:
 	; FAR CALLでディスク読み込み (0xFFFB:0x0014)
 	mov	 ax, 01000h	   ; 本体ロード先セグメント
 	mov	 ds, ax
@@ -169,6 +212,17 @@ load_error:
 	mov	es,ax
 	cli
 	hlt
+
+crtcinitdata:
+	dw	0040h, 0320h, 0000h, 0000h, 035fh, 0000h, 0010h, 0000h
+	dw	036fh, 009ch, 031ch, 009ch, 031ch, 0040h, 0360h, 0040h
+	dw	0360h, 0000h, 009ch, 0000h, 0050h, 0000h, 009ch, 0000h
+	dw	0080h, 004ah, 0001h, 0000h, 801fh, 0003h, 0000h, 0150h
+
+;	dw	0040h, 0320h, 0000h, 0000h, 035fh, 0000h, 0010h, 0000b
+;	dw	0370h, 009ch, 031ch, 009ch, 031ch, 01d0h, 0360h, 0040h
+;	dw	01d0h, 0000h, 009ch, 0050h, 00a0h, 0000h, 009ch, 0080h
+;	dw	0100h, 004ah, 0001h, 0000h, 001fh, 0003h, 0000h, 0150h
 
 CODESEG ENDS
 
