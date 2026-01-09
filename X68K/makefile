@@ -36,7 +36,7 @@ $(TARGET).xdf: crt0.o $(OBJS) boot.bin
 #$(TARGET).X: $(OBJS)
 #	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
-# 3. (おまけ) .XやXSP対応にする場合
+# 3. (おまけ) .XやXSP対応にする場合(ソースの#define DEBUG2を外す)
 x: $(OBJS)
 	$(CC) $(LDFLAGS) -o $(TARGET).X $(OBJS)
 
