@@ -1,5 +1,5 @@
 ﻿# --- 設定 ---
-TARGET   = ds1_TW
+TARGET   = ds1_tw
 CC       = wcl
 AS       = wasm
 LD       = wlink

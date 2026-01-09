@@ -1,6 +1,4 @@
-/* ds1_98.c OpenWatcom */
-/* VM/UVˆÈ~(‘½•ª) */
-/* ƒLƒƒƒ‰‚ğo‚· */
+/* ds1_tw.c FM TOWNS OpenWatcom */
 
 #include <i86.h>
 
