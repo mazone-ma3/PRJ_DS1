@@ -68,10 +68,8 @@ _asm{
 
 void put_str(char x, char y, char *str)
 {
-	unsigned char __far *vram = (unsigned char far *)MK_FP(0xa000,0000L);
 	int i = 0;
 	while(str[i] != '\0'){
-		vram[(i + x + y * 80) * 2] = str[i];
 		++i;
 	}
 }
@@ -116,13 +114,13 @@ unsigned char mapdata[BUFFSIZE];
 /* R G B */
 unsigned char org_pal[MAXCOLOR][3] = {
 	{  0,  0,  0},
-	{  0,  0,  7},
-	{  7,  0,  0},
-	{  7,  0,  7},
-	{  0,  7,  0},
-	{  0,  7,  7},
-	{  7,  7,  0},
-	{  7,  7,  7},
+	{  0,  0, 15},
+	{ 15,  0,  0},
+	{ 15,  0, 15},
+	{  0, 15,  0},
+	{  0, 15, 15},
+	{ 15, 15,  0},
+	{ 15, 15, 15},
 	{  0,  0,  0},
 	{  0,  0, 15},
 	{ 15,  0,  0},
@@ -156,7 +154,6 @@ unsigned char org_pal[MAXCOLOR][3] = {
 void put_8(unsigned short ,unsigned short ,unsigned short);
 void g_init(unsigned short);
 void end(void);
-void setpage(unsigned short, unsigned short);
 void clear(unsigned short);
 void pal_set(unsigned char, unsigned short,unsigned char,unsigned char,unsigned char);
 void pal_all(unsigned char, unsigned char[MAXCOLOR][3]);
@@ -165,28 +162,35 @@ void screen_switch(unsigned short);
 void cursor_switch(unsigned short);
 void v_sync(void);
 
-unsigned char __far *bvram, // = (unsigned char __far *)MK_FP(0xa800, 0),
-	__far *rvram, // = (unsigned char __far *)MK_FP(0xb000, 0),
-	__far *gvram, // = (unsigned char __far *)MK_FP(0xb800, 0),
-	__far *ivram; // = (unsigned char __far *)MK_FP(0xe000, 0);
-
-unsigned char conv_tbl[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 , 15};
-
-
 void put_8(unsigned short x, unsigned short y, unsigned short no)
 {
 	unsigned short j, c;
 	unsigned short *p0 = (unsigned short *)ds1_grp;
+	unsigned char __far *w;
 
 	for (j = 0; j < 16; j++){
 		c = x + y * 16 * 80 + j * 80;
-		*((unsigned short __far *)(unsigned char __far *)(bvram + c))
+/*		*((unsigned short __far *)(unsigned char __far *)(bvram + c))
 			= p0[no + j * 16 + 1024*0];
 		*((unsigned short __far *)(unsigned char __far *)(rvram + c))
 			= p0[no + j * 16 + 1024*1];
 		*((unsigned short __far *)(unsigned char __far *)(gvram + c))
 			= p0[no + j * 16 + 1024*2];
 		*((unsigned short __far *)(unsigned char __far *)(ivram + c))
+			= 0;
+*/
+		w = MK_FP(0xc000,c);
+		outp(0xff81, 1);
+		*((unsigned short __far *)(unsigned char __far *)(w))
+			 = p0[no + j * 16 + 1024*0];
+		outp(0xff81, 2);
+		*((unsigned short __far *)(unsigned char __far *)(w))
+			 = p0[no + j * 16 + 1024*1];
+		outp(0xff81, 4);
+		*((unsigned short __far *)(unsigned char __far *)(w))
+			 = p0[no + j * 16 + 1024*2];
+		outp(0xff81, 8);
+		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2];
 	}
 }
@@ -195,49 +199,35 @@ void put_8_font(unsigned short x, unsigned short y, unsigned short no)
 {
 	unsigned short j, c;
 	unsigned short *p0 = (unsigned short *)font_grp;
+	unsigned char __far *w;
 
 	for (j = 0; j < 16; j++){
 		c = x + y * 16 * 80 + j * 80;
-		*((unsigned short __far *)(unsigned char __far *)(bvram + c))
+/*		*((unsigned short __far *)(unsigned char __far *)(bvram + c))
 			= p0[no + j * 16 + 1024*0];
 		*((unsigned short __far *)(unsigned char __far *)(rvram + c))
 			= p0[no + j * 16 + 1024*1];
 		*((unsigned short __far *)(unsigned char __far *)(gvram + c))
 			= p0[no + j * 16 + 1024*2];
 		*((unsigned short __far *)(unsigned char __far *)(ivram + c))
+			= 0;
+*/
+		w = MK_FP(0xc000,c);
+		outp(0xff81, 1);
+		*((unsigned short __far *)(unsigned char __far *)(w))
+			 = p0[no + j * 16 + 1024*0];
+		outp(0xff81, 2);
+		*((unsigned short __far *)(unsigned char __far *)(w))
+			 = p0[no + j * 16 + 1024*1];
+		outp(0xff81, 4);
+		*((unsigned short __far *)(unsigned char __far *)(w))
+			 = p0[no + j * 16 + 1024*2];
+		outp(0xff81, 8);
+		*((unsigned short __far *)(unsigned char __far *)(w))
 			 = p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2];
 	}
 }
 
-/*カーソルのＯＦＦ、ＶＲＡＭアドレスの設定*/
-void g_init(unsigned short mode_f)
-{
-/*unsigned short g_driver, g_mode;
-	g_driver = DETECT;
-	g_mode = 1;
-	initgraph(&g_driver, &g_mode ,"");
-*/
-	_disable();
-
-	outp(0x6a, 1   ); /* 16色モード (0x6a=mode f/fp2)*/
-
-/*	outp(0x6a, 0x07);  拡張モード変更可能
-	outp(0x6a, 0x84);  gdc2.5mhz */
-
-	outp(0xa2, 0x4b); /* GDC CSRFORMコマンド */
-	outp(0xa0, (mode_f == 1)); /* L/R = 1 (縦方向の拡大係数)*/
-
-	outp(0x68, 8   ); /* モードF/F1 (8で高解像度)*/
-
-	outpw(0x4a0,0xfff0);
-	outpw(0x7c, 0);
-
-	screen_switch(ON); /* 表示開始 */
-
-	_enable();
-
-	cursor_switch(OFF);
-}
 
 /*終了処理*/
 void end()
@@ -256,62 +246,46 @@ void cursor_switch(unsigned short mode)
 #endif
 }
 
-void screen_switch(unsigned short mode)
-{
-	if(mode){
-		outp(0xa2, 0x0d); /* 表示開始 */
-	}else{
-		outp(0xa2, 0x0c);
-	}
-}
-
-/*ページ切り替え*/
-void setpage(unsigned short visual, unsigned short active)
-{
-	outp(0xa4, visual);
-	outp(0xa6, active);
-}
-
 
 /*テキスト画面及びグラフィック画面の消去*/
 void clear(unsigned short type)
 {
 	unsigned short i;
+	unsigned char __far *w;
 
 	if(type & 1){
 		for (i = 0; i < 80 * 400; i++){
-			*(bvram++) = 0;
-			*(rvram++) = 0;
-			*(gvram++) = 0;
-			*(ivram++) = 0;
+			w = MK_FP(0xc000,i);
+
+			outp(0xff81, 0x0f);
+			*((unsigned short __far *)(unsigned char __far *)(w))
+				 = 0;
 		}
 	}
 #ifndef DEBUG2
 	if(type & 2)
 		printf("\x1b*");
 #endif
-
-	bvram = ((unsigned char __far *)MK_FP(0xa800, 0));
-	rvram = ((unsigned char __far *)MK_FP(0xb000, 0));
-	gvram = ((unsigned char __far *)MK_FP(0xb800, 0));
-	ivram = ((unsigned char __far *)MK_FP(0xe000, 0));
 }
 
 /*パレット・セット*/
 void pal_set(unsigned char pal_no, unsigned short color, unsigned char red, unsigned char green,
 	unsigned char blue)
 {
-	outpw(0xa8, color);
-	outpw(0xaa, green);
-	outpw(0xac, red);
-	outpw(0xae, blue);
 }
 
 /*垂直同期待ち*/
 void wait_vsync(void)
 {
-	while((inp(0x60) & 0x20));
-	while(!(inp(0x60) & 0x20));
+//	while(!vsync_flag);
+//	vsync_flag = 0;
+	/* VSYNC(=1)待ち */
+	do{
+		outp(0x440, 30);
+	}while((inp(0x0443) & 0x04)); /* 動作中 */
+	do{
+		outp(0x440, 30);
+	}while(!(inp(0x0443) & 0x04)); /* 動作中 */
 }
 
 void sys_wait(unsigned char wait)
@@ -397,104 +371,14 @@ void pal_all(unsigned char pal_no, unsigned char color[MAXCOLOR][3])
 }
 
 
-/*キースキャン及びタイマウエイト・ルーチン*/
-
-#define UP     (key_scan(0x7) & 0x04)
-#define DOWN   (key_scan(0x7) & 0x20)
-#define RIGHT  (key_scan(0x7) & 0x10)
-#define LEFT   (key_scan(0x7) & 0x08)
-#define C_UP   (key_scan(0x5) & 0x02)
-#define C_DOWN (key_scan(0x5) & 0x04)
-#define ESC    (key_scan(0x0) & 0x01)
-#define SPACE  (key_scan(0x6) & 0x10)
-#define TAB    (key_scan(0x1) & 0x80)
-#define SHIFT  (key_scan(0xe) & 0x01)
-#define F1     (key_scan(0xc) & 0x04)
-#define F2     (key_scan(0xc) & 0x08)
-#define F3     (key_scan(0xc) & 0x10)
-#define F4     (key_scan(0xc) & 0x20)
-#define F5     (key_scan(0xc) & 0x40)
-#define F6     (key_scan(0xc) & 0x80)
-#define F7     (key_scan(0xd) & 0x01)
-#define F8     (key_scan(0xd) & 0x02)
-#define F9     (key_scan(0xd) & 0x04)
-#define F10    (key_scan(0xd) & 0x08)
-
-#define EOIDATA 0x20
-#define EOI 0
-
-void __interrupt __far ip_v_sync(void);
-void __interrupt __far (*keepvector)(void);
-volatile unsigned char __far vs_count;
-unsigned short keepport;
 
 void key_wait(void);
 unsigned char key_scan(unsigned short);
-void key_beep_off(void);
 void key_flash(void);
 
-union REGS reg;
-union REGS reg_out;
+//union REGS reg;
+//union REGS reg_out;
 
-/*キーグループの参照*/
-unsigned char key_scan(unsigned short group)
-{
-#ifndef DEBUG2
-	reg.h.ah = 0x04;
-	reg.h.al = (unsigned char)group;
-	int86(0x18, &reg, &reg);
-	return(reg.h.ah);
-#else
-_asm{
-	mov	ah,04h
-	int	18h
-	mov	al,ah
-}
-#endif
-}
-#ifdef DEBUG
-/*
-void init_v_sync(void)
-{
-	_disable();
-	keepport = inp(2);
-	keepvector = _dos_getvect(10);
-	_dos_setvect(10, ip_v_sync);
-
-	outp(EOI, EOIDATA);
-	outp(2, keepport & 0xfb);
-
-	outp(0x64, 1);
-	_enable();
-}
-
-void term_v_sync(void)
-{
-	_disable();
-	_dos_setvect(10, keepvector);
-	outp(2, keepport);
-	vs_count = 0;
-	_enable();
-}
-*/
-void __interrupt __far ip_v_sync(void)
-{
-	++vs_count;
-	outp(0x64, 1);	/* VSYNC初期化 */
-	outp(EOI, EOIDATA);
-}
-/*タイマウェイト*/
-/*void wait(unsigned short wait)
-{
-	while(1){
-		_disable();
-		if(vs_count >= wait)
-			break;
-		_enable();
-	}
-	_enable();
-}*/
-#endif
 
 /*キー待ち*/
 void key_wait(void)
@@ -505,13 +389,6 @@ void key_wait(void)
 }
 
 
-/*キーバッファオーバー時のキー音をなくす*/
-void key_beep_off(void)
-{
-	poke(0, 0x0500, (peek(0, 0x0500) | 0x20));
-	poke(0, 0x0500, (peek(0, 0x0500) | 0xdf));
-}
-
 /*キーバッファ・クリア == 残っているキー入力を読み捨てる*/
 void key_flash(void)
 {
@@ -519,60 +396,6 @@ void key_flash(void)
 	while(kbhit())
 	getch();
 #endif
-}
-
-/* ジョイスティック PC-9801プログラマーズBibleより */
-#define FM_PORT1	0x0188
-#define FM_PORT2	0x018a
-
-#define OPN_IO_A	0x0e
-#define OPN_IO_B	0x0f
-
-#define JOY_UP	0x01
-#define	JOY_DOWN	0x02
-#define JOY_LEFT	0x04
-#define JOY_RIGHT	0x08
-#define	JOY_TRIG1	0x10
-#define	JOYTRIG2	0x20
-
-void	InitJoystick(unsigned short stick);
-unsigned char GetJoystick(void);
-
-unsigned char triger(unsigned char joy_status);
-unsigned char joy_key(unsigned char joy_status);
-
-
-void InitJoystick(unsigned short stick)
-{
-	unsigned char result;
-	_disable();
-	outp(FM_PORT1, 0x07);
-	result = inp(FM_PORT2);
-	result &= 0x1f;
-	result |= 0x80;
-	outp(FM_PORT1, 0x07);
-	outp(FM_PORT2, result);
-
-	outp(FM_PORT1,OPN_IO_B);
-	if(stick == 2){
-		outp(FM_PORT2, 0xcf);
-	}else{
-		outp(FM_PORT2, 0x8f);
-	}
-	_enable();
-}
-
-unsigned char GetJoystick(void)
-{
-	unsigned char result;
-
-	_disable();
-	outp(FM_PORT1, OPN_IO_A);
-	result = inp(FM_PORT2);
-	_enable();
-	result ^= 0xff;
-	result &= 0x3f;
-	return result;
 }
 
 unsigned char fadeflag = 0;
@@ -600,11 +423,6 @@ void put_chr8_text(int x, int y, char chr, char atr)
 
 	if((x < 0) || (y < 0))
 		return;
-
-	vram[(x + y * 80) * 2] = chr;
-	vram[(x + y * 80) * 2+1] = 0;
-	vram[(x + y * 80) * 2 + 0x2000] = 0xe1;
-	vram[(x + y * 80) * 2 + 0x2001] = 0;
 }
 
 void put_chr8(int x, int y, int chr, char atr)
@@ -674,48 +492,141 @@ void play_sound_effect(void) {
 
 
 unsigned char keycode = 0;
-	unsigned short code = 0, code2 = 0, code3 = 0, code4 = 0;
-	unsigned char st;
 
 unsigned char count = 0;
 char str[3];
 
-int keyscan(void)
+#define PARA_RINT 0
+#define PARA_DSWD 1
+#define PARA_ESWD 2
+#define PARA_FSWD 3
+#define PARA_GSWD 4
+#define PARA_EAXDWD 5
+#define PARA_EDXDWD 7
+#define PARA_END 9
+
+/* 80386の仕様でリアルモードでは変数がアドレス先頭の1MBにないとこける */
+/* 本来なら共有変数を作るが煩雑になるのでとりあえず */
+unsigned short PARABLK[PARA_END];
+
+unsigned char matrix[16];
+
+void KYB_matrix(void)
 {
+#ifndef DEBUG2
+__asm{
+	mov	ax,ds
+	mov	es,ax
 
-	keycode = 0;
+;	lea	ebx,matrix
+;	mov	ecx,8
 
-	code = key_scan(0x7);
-	code2 = key_scan(0x8);
-	code3 = key_scan(0x9);
-	code4 = key_scan(0x5);
-	st = GetJoystick();
+	mov	ax,OFFSET matrix
+	mov	di,ax
 
-/*(	UP     (key_scan(0x7) & 0x04)
-	DOWN   (key_scan(0x7) & 0x20)
-	RIGHT  (key_scan(0x7) & 0x10)
-	LEFT   (key_scan(0x7) & 0x08)	)*/
+	mov	ax,SEG matrix
+	mov ds,ax
 
-	if ((code & 0x04) || (code2 & 0x08) || (st & 0x01)){	/* 8 */
-		keycode |= KEY_UP1;
-	}
-	if ((code & 0x10) || (code3 & 0x01) || (st & 0x08)){	/* 6 */
-		keycode |= KEY_RIGHT1;
-	}
-	if ((code & 0x20) || (code3 & 0x08) || (st & 0x02)){	/* 2 */
-		keycode |= KEY_DOWN1;
-	}
-	if ((code & 0x08) || (code2 & 0x40) || (st & 0x04)){	/* 4 */
-		keycode |= KEY_LEFT1;
-	}
-	if (ESC){
-		keycode |= KEY_B;
-	}
-	if ((st & 0x10) || (code4 & 0x02) || (SPACE)){	/* Z */
+	mov	ah,0ah
+
+	int	90h
+
+	jc	error
+
+error:
+}
+#endif
+}
+
+#ifdef DEBUG
+void KYB_matrix(void)
+{
+	PARABLK[PARA_RINT] = 0x90;
+	PARABLK[PARA_EAXDWD] = 0x0a * 256;
+
+__asm{
+	mov	ax,ds
+	mov	es,ax
+
+	mov	ax,0250fh
+	lea	ebx,matrix
+	mov	ecx,8
+
+	cli		/* リアルモードは割り込み禁止にしてみている */
+	int	21h
+	sti
+
+	jc	error
+
+	mov	di,cx
+
+;	xchg	cl,ch
+	ror	ecx,16
+;	ror	cx
+
+;	mov	DSWD,cx
+
+	mov	PARABLK+PARA_DSWD*2,cx
+
+;	mov	ah,0ah; 54h
+;	mov	al,DEVNO
+;	mov	ch,00h
+;	mov	cl,00h
+
+;	mov	EAXDWD,eax
+;	mov	bx,90h; 93h
+;	mov	RINT,bx
+
+	mov	ax,2511h
+	lea	edx,PARABLK;RINT
+	cli		/* 同上 */
+	int	21h
+	sti
+error:
+
+}
+}
+#endif
+
+unsigned char keyscan(void)
+{
+	unsigned char st, pd;
+	unsigned char k5=0, k6=0, k7=0, k8=0, k9=0, ka=0;
+	unsigned char paddata;
+//	static char matrix[16];
+	unsigned char keycode = 0;
+
+	_disable();
+	KYB_matrix();
+	_enable();
+
+	k5 = matrix[5];
+	k6 = matrix[6];
+	k7 = matrix[7];
+	k8 = matrix[8];
+	k9 = matrix[9];
+	ka = matrix[0xa];
+
+	paddata = inp(0x4d0 + 0 * 2); 
+	st = (paddata & 0x0f);
+	pd = (paddata >> 4) & 0x03;
+
+	if((k5 & 0x04) || (k6 & 0x20) || !(pd & 0x01)) /* Z,SPACE */
 		keycode |= KEY_A;
-	}
-	if((st & 0x020) || (code4 & 0x04)){	/* X */
+	if((k5 & 0x08) || !(pd & 0x02)) /* X */
 		keycode |= KEY_B;
+	if((k7 & 0x08) || (k9 & 0x20) || !(st & 0x01)) /* 8 */
+		keycode |= KEY_UP1;
+	if((k8 & 0x08) || (ka & 0x01) || !(st & 0x02)) /* 2 */
+		keycode |= KEY_DOWN1;
+
+	if(!(st & 0x0c)){ /* RL */
+		keycode |= KEY_START;
+	}else{
+		if((k7 & 0x40) || (k9 & 0x80) || !(st & 0x04)) /* 4 */
+			keycode |= KEY_LEFT1;
+		if((k8 & 0x01) || (ka & 0x02) || !(st & 0x08)) /* 6 */
+			keycode |= KEY_RIGHT1;
 	}
 
 	return keycode;
@@ -731,28 +642,21 @@ void main(void)
 void main_c(void)
 #endif
 {
-	unsigned short mode = 1;
-	unsigned char sub_flag;
+/*
+__asm{
+	mov	ax,0b000h
+	mov	es,ax
+	cli
+	hlt
+}
+*/
 
-	int j;
-	bvram = ((unsigned char __far *)MK_FP(0xa800, 0));
-	rvram = ((unsigned char __far *)MK_FP(0xb000, 0));
-	gvram = ((unsigned char __far *)MK_FP(0xb800, 0));
-	ivram = ((unsigned char __far *)MK_FP(0xe000, 0));
-
-	key_beep_off();
-
-	screen_switch(OFF);
-	g_init(0);
-	pal_all(0, org_pal);
+//	pal_all(0, org_pal);
 //	set_constrast(0, org_pal, 0);
-	setpage(1,1);
-//	screen_switch(ON);
-	setpage( 0, 0);
 
-	InitJoystick(1);
+	outp(0x448,0);
+	outp(0x44a,0x11);	// layer 0 DISPLAY ON, layer 1 DISPLAY OFF
 
-	outp(0x62,0x0c);	/**Text OFF */
 	cls();
 
 #ifdef DEBUG2
@@ -768,7 +672,10 @@ void main_c(void)
 //	term_v_sync();
 
 	cls();
-	outp(0x62,0x0d);	/**Text ON */
+
+	outp(0x448,0);
+	outp(0x44a,0x15);	// layer 0 DISPLAY ON, layer 1 DISPLAY ON
+
 	key_flash();
 
 	end();
