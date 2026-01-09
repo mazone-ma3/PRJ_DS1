@@ -13,7 +13,7 @@ OBJS     = $(TARGET).obj
 
 # --- ルール ---
 
-all: $(TARGET).hdm
+all: $(TARGET).xdf
 
 # 1. パターンルール (.c -> .obj)
 # wcl は -c オプションを付けないとリンクまで行こうとするので注意
@@ -31,7 +31,7 @@ townsipl.bin : townsipl.asm
 
 # 4. リンク工程
 # wlink の独自記法を整理
-$(TARGET).hdm: start.obj $(OBJS) townsipl.bin
+$(TARGET).xdf: start.obj $(OBJS) townsipl.bin
 	$(LD) file { start.obj $(OBJS) } name $(TARGET).bin option Map form raw
 # 空の1.2MBイメージ作成
 	dd if=/dev/zero of=$@ bs=1024 count=1232
@@ -46,8 +46,7 @@ exe: $(TARGET).c
 	$(LD) system Dos option quiet name $(TARGET).exe file { $(OBJS) }
 
 # --- 依存関係 ---
-$(TARGET).obj: $(TARGET).c
-# common.h inkey.h
+$(TARGET).obj: $(TARGET).c common.h inkey.h
 start.obj : start.asm
 
 clean:

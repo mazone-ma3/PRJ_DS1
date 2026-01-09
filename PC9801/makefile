@@ -13,7 +13,7 @@ OBJS     = $(TARGET).obj
 
 # --- ルール ---
 
-all: $(TARGET).hdm
+all: $(TARGET).xdf
 
 # 1. パターンルール (.c -> .obj)
 # wcl は -c オプションを付けないとリンクまで行こうとするので注意
@@ -31,14 +31,14 @@ ipl.bin : ipl.asm
 
 # 4. リンク工程
 # wlink の独自記法を整理
-$(TARGET).hdm: start.obj $(OBJS) ipl.bin
+$(TARGET).xdf: start.obj $(OBJS) ipl.bin
 	$(LD) file { start.obj $(OBJS) } name $(TARGET).bin option Map form raw
 # 空の1.2MBイメージ作成
 	dd if=/dev/zero of=$@ bs=1024 count=1232
 # IPLを0セクタ目に
 	dd if=ipl.bin of=$@ bs=1024 conv=notrunc seek=0
 # メインを1セクタ目に
-	dd if=ds1_98.bin of=$@ bs=1024 conv=notrunc seek=1
+	dd if=$(TARGET).bin of=$@ bs=1024 conv=notrunc seek=1
 
 # 5. おまけ .exeを作る場合(ソースの#define DEBUG2を削除しておく)
 exe: $(TARGET).c

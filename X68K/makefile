@@ -44,8 +44,7 @@ xsp:  $(OBJS)
 	$(CC) $(LDFLAGS) -o $(TARGET)_XSP.X $(OBJS) $(XSPLIBFILES)
 
 # --- 依存関係 ---
-$(TARGET).o: $(TARGET).c
-# inkey.h
+$(TARGET).o: $(TARGET).c common.h inkey.h
 
 crt0.o: crt0.s
 

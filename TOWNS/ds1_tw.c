@@ -2,7 +2,7 @@
 
 #include <i86.h>
 
-#define DEBUG2
+#include "mode.h"
 
 #ifndef DEBUG2
 #include <stdio.h>
@@ -237,10 +237,10 @@ void end()
 void cursor_switch(unsigned short mode)
 {
 #ifndef DEBUG2
-	if(mode)
+/*	if(mode)
 		printf("\x1b[>1l\x1b[>5l");
 	else
-		printf("\x1b*\x1b[>1h\x1b[>5h");
+		printf("\x1b*\x1b[>1h\x1b[>5h");*/
 #endif
 }
 
@@ -261,8 +261,8 @@ void clear(unsigned short type)
 		}
 	}
 #ifndef DEBUG2
-	if(type & 2)
-		printf("\x1b*");
+//	if(type & 2)
+//		printf("\x1b*");
 #endif
 }
 
@@ -392,7 +392,7 @@ void key_flash(void)
 {
 #ifndef DEBUG2
 	while(kbhit())
-	getch();
+		getch();
 #endif
 }
 

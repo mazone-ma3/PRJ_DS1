@@ -4,7 +4,7 @@
 
 #include <i86.h>
 
-#define DEBUG2
+#include "mode.h"
 
 #ifndef DEBUG2
 #include <stdio.h>
@@ -101,15 +101,10 @@ void put_str(char x, char y, char *str)
 	NUMERIC ^= BITDATA(BITNUM);		\
 }
 
-#define PARTS_HEAD 0x3c00 /*組み合わせキャラデータの先頭番地*/
-#define BUFFSIZE 16384
-
 #define ON 1
 #define OFF 0
 #define ERROR 1
 #define NOERROR 0
-
-unsigned char mapdata[BUFFSIZE];
 
 #define MAXCOLOR 16
 
@@ -245,14 +240,34 @@ void end()
 	cursor_switch(ON);
 }
 
+union REGS reg;
+union REGS reg_out;
+
 /*カーソル及びファンクションキー表示の制御*/
 void cursor_switch(unsigned short mode)
 {
 #ifndef DEBUG2
-	if(mode)
+	if(mode){
+		reg.h.ah = 0x11;
+		int86(0x18, &reg, &reg);
 		printf("\x1b[>1l\x1b[>5l");
-	else
+	}else{
+		reg.h.ah = 0x12;
+		int86(0x18, &reg, &reg);
 		printf("\x1b*\x1b[>1h\x1b[>5h");
+	}
+#else
+	if(mode){
+_asm{
+		mov	ah,011h
+		int	18h
+}
+	}else{
+_asm{
+		mov	ah,012h
+		int	18h
+}
+	}
 #endif
 }
 
@@ -432,9 +447,6 @@ void key_wait(void);
 unsigned char key_scan(unsigned short);
 void key_beep_off(void);
 void key_flash(void);
-
-union REGS reg;
-union REGS reg_out;
 
 /*キーグループの参照*/
 unsigned char key_scan(unsigned short group)

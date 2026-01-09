@@ -1,6 +1,6 @@
 /* ds1_68e.c X68000 elf2x68k By m@3 */
 
-#define DEBUG2
+#include "mode.h"
 
 #ifndef DEBUG2
 #include <stdio.h>
