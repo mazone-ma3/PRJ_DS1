@@ -25,6 +25,9 @@ char peek(int a, int b) {
 	return *((char __far *)MK_FP(a,b));
 }
 #ifdef DEBUG2
+extern void set_int41(void);
+extern char key_matrix[128];
+
 void outp(int adr, char data)
 {
 _asm{
@@ -598,6 +601,17 @@ __asm{
 
 error:
 }
+#else
+	int i;
+	_disable();
+	for(i = 0; i < 16; i++){
+//		str[0] = key_matrix[i] + 0x30;
+//		str[1] = '\0';
+//		print_at(PRINT_MUL * 24, 12 + i, str);
+
+		matrix[i] = key_matrix[i];
+	}
+	_enable();
 #endif
 }
 
@@ -713,6 +727,9 @@ __asm{
 	hlt
 }
 */
+#ifdef DEBUG2
+	set_int41();
+#endif
 
 	pal_all(0, org_pal);
 //	set_constrast(0, org_pal, 0);
