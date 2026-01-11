@@ -244,6 +244,9 @@ normal0:
 	cmp	bl,0f0h
 	jz	make		; タイパマチックデータ
 
+	cmp	bl,0e0h
+	jz	eoi			; デバイス属性情報か拡張データフォーマット
+
 normal:
     ; Make/Break判定（bit6 of AH: 仮に1=Break。Tsugaruでテストして逆ならjz/je反転）
 
@@ -320,18 +323,18 @@ eoi:
 ;	out	dx,al	;/* EOI(Master) */
 
 end_handler:
-	mov	dx,604h
-	mov	al,1
-	out	dx,al		;キーボード割り込み許可
+;	mov	dx,604h
+;	mov	al,1
+;	out	dx,al		;キーボード割り込み許可
 
-	mov	dx,006ch
-	out	dx,al ; 1μ秒ウェイト
-	cmc
-	cmc
+;	mov	dx,006ch
+;	out	dx,al ; 1μ秒ウェイト
+;	cmc
+;	cmc
 
-	mov	al,20h
-	mov	dx,0x10
-	out	dx,al	;/* EOI(Slave) */
+;	mov	al,20h
+;	mov	dx,0x10
+;	out	dx,al	;/* EOI(Slave) */
 
 	mov	dx,006ch
 	out	dx,al ; 1μ秒ウェイト
