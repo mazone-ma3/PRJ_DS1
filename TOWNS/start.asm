@@ -157,6 +157,8 @@ INTAEH_INIT:
 	mov	dx,000h+2
 	in	al,dx ;0000h+2
 
+	mov	al,0
+
 ;	movb	_saveIMR_M,al
 
 	mov	dx,006ch
@@ -171,6 +173,11 @@ INTAEH_INIT:
 	and	al,dl
 	mov	dx,0000h+2
 	out	dx,al	; 割り込み許可
+
+	mov	dx,006ch
+	out	dx,al ; 1μ秒ウェイト
+	cmc
+	cmc
 
 	mov	dx,604h
 	mov	al,1
@@ -193,7 +200,12 @@ keyboard_irq_handler:
 
 ;	hlt
 
-	mov    dx,602h	; スタースタレジスタ
+	mov	dx,0604h
+	in	al,dx
+	test	al,01h
+	jz	end_handler
+
+	mov    dx,602h	; ステータスレジスタ
 	in	al,dx
 	test al,01h		; OBF(データ有無)をチェック
 	jz	end_handler
@@ -201,15 +213,32 @@ keyboard_irq_handler:
     ; ポート0x600から1バイト目読む
     mov     dx, 600h
     in      al, dx
+
+
+;    mov     bx, offset _key_matrix
+;   mov      word ptr ds:[bx], ax    ; ビットON（押下中）
+;	jz	end_handler
+
+	mov	bx,offset key_firstbyte
+	mov	ah,byte ptr ds:[bx]
+
 ;    cmp     al, 80h         ; bit7=1か？（有効データ）
 ;    jnb      end_handler    ; 無効なら終了（念のため）
 
-    test     al, 80h         ; bit7=1か？（有効データ）
-    jz      end_handler    ; 無効なら終了（念のため）
+    test     al, 80h         ; bit7=0か？（有効データ）
+;    jz      end_handler    ; 無効なら終了（念のため）
+	jz	normal0				; 入力
+
+;	hlt
+
+	mov	bx,offset key_firstbyte
+	mov	byte ptr ds:[bx], al
 
     mov     ah, al          ; AH=1バイト目（フラグ保存）
+
     in      al, dx          ; AL=2バイト目（キーコード）
 
+normal0:
 	mov		bl,ah
 	and	bl,0f0h
 	cmp	bl,0f0h
@@ -217,6 +246,8 @@ keyboard_irq_handler:
 
 normal:
     ; Make/Break判定（bit6 of AH: 仮に1=Break。Tsugaruでテストして逆ならjz/je反転）
+
+
 
     test    ah, 10h         ; bit4=1ならBreak
 	mov	ah,0
@@ -275,24 +306,41 @@ break:
     and     word ptr ds:[bx], ax   ; ビットOFF
 
 eoi:
-	mov	dx,006ch
-	out	dx,al ; 1μ秒ウェイト
-	cmc
-	cmc
+;	mov	dx,006ch
+;	out	dx,al ; 1μ秒ウェイト
+;	cmc
+;	cmc
 
 
 ;    mov     al, 20h         ; Non-specific EOI
 ;    out     20h, al
 
-	mov	al,20h
-	mov	dx,0
-	out	dx,al	;/* EOI(Master) */
-
-end_handler:
-
 ;	mov	al,20h
 ;	mov	dx,0
 ;	out	dx,al	;/* EOI(Master) */
+
+end_handler:
+	mov	dx,604h
+	mov	al,1
+	out	dx,al		;キーボード割り込み許可
+
+	mov	dx,006ch
+	out	dx,al ; 1μ秒ウェイト
+	cmc
+	cmc
+
+	mov	al,20h
+	mov	dx,0x10
+	out	dx,al	;/* EOI(Slave) */
+
+	mov	dx,006ch
+	out	dx,al ; 1μ秒ウェイト
+	cmc
+	cmc
+
+	mov	al,20h
+	mov	dx,0
+	out	dx,al	;/* EOI(Master) */
 
 
     pop     ds
@@ -310,6 +358,8 @@ _DATA SEGMENT WORD PUBLIC 'DATA'
 public _key_matrix : far
 
 _key_matrix: db 128 dup(0)  ; キーコード0-127のビットマップ（bit0=押下中）
+
+key_firstbyte:	db	1 dup(0)
 
 NUM_INTS				EQU		32
 INT_DATA_BLOCKS:		DD		NUM_INTS dup (0)

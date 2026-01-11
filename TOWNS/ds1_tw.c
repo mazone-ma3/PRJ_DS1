@@ -604,11 +604,12 @@ error:
 #else
 	int i;
 	_disable();
+/*	for(i = 0; i < 8; i++){
+		str[0] = key_matrix[i] + 0x30;
+		str[1] = '\0';
+		print_at(PRINT_MUL * 24, 12 + i, str);
+	}*/
 	for(i = 0; i < 16; i++){
-//		str[0] = key_matrix[i] + 0x30;
-//		str[1] = '\0';
-//		print_at(PRINT_MUL * 24, 12 + i, str);
-
 		matrix[i] = key_matrix[i];
 	}
 	_enable();
