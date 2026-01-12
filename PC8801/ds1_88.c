@@ -103,6 +103,7 @@ loop2_1:
 
 	OUT (#0x5F),A
 
+	XOR	A
 	LD HL,#0x0f3c8
 loop3_1:
 	LD (HL),A
