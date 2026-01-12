@@ -74,13 +74,52 @@ void clearBuffer(void) {
 	}
 }
 
-void  cls88(unsigned char color)
+void  cls88_v1(unsigned char color) __sdcccall(1)
 {
 	(void)color;
 __asm
-	ld	hl, 2
-	add	hl, sp
-	ld	a, (hl)
+;	ld	hl, 2
+;	add	hl, sp
+;	ld	a, (hl)
+;	ld	b,a
+
+	DI
+
+	LD HL,#0x0C000
+loop2_1:
+	LD C,#0x5C
+	OUT (C),A
+	LD (HL),A
+	LD C,#0x5D
+	OUT (C),A
+	LD (HL),A
+	LD C,#0x5E
+	OUT (C),A
+	LD (HL),A
+
+	INC HL
+	CP H
+	JR NZ,loop2_1
+
+	OUT (#0x5F),A
+
+	LD HL,#0x0f3c8
+loop3_1:
+	LD (HL),A
+	INC HL
+	CP H
+	JR NZ,loop3_1
+	EI
+__endasm;
+}
+
+void  cls88_v2(unsigned char color) __sdcccall(1)
+{
+	(void)color;
+__asm
+;	ld	hl, 2
+;	add	hl, sp
+;	ld	a, (hl)
 	ld	b,a
 
 	DI
@@ -585,7 +624,10 @@ void wait(int j) {
 }
 
 void cls(void) {
-	cls88(0);
+	if(basic_mode)
+		cls88_v1(0);
+	else
+		cls88_v2(0);
 /*	int i,j;
 	for(j = 0l; j < 24; j++)
 		for(i = 0; i < 80; ++i)
@@ -649,8 +691,6 @@ int main(void)
 {
 //	printf("sys=%x mode=%x\n",*sysport, inp(0x32));
 
-	cls88(0);
-
 	Set_RAM_MODE();
 
 //	outp(0x32, inp(0x32) | 0x20);	/* 512 colors */
@@ -675,6 +715,8 @@ int main(void)
 
 	st = pd = 255;
 	outp(0x51,0x80);	/* Cursor Off */
+
+	cls();
 
 //	while(((k9 = inp(0x09)) & 0x80)){ /* ESC */
 	for(;;) //{
