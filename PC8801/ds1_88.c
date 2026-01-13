@@ -1,6 +1,8 @@
 /* ds1_88.c for z88dk PC-8801/mkIISR ZSDCCî≈ By m@3 */
 /* ÉLÉÉÉâÇèoÇ∑ */
 
+#include "mode.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
@@ -162,7 +164,7 @@ loop2:
 	JR NZ,loop2
 ;	INC C
 ;	DJNZ loop1
-;	OUT (#0x5F),A
+	OUT (#0x5F),A
 
 	xor a
 	out(#0x35),a	; Access MAINRAM
@@ -580,6 +582,8 @@ void put_chr8(int x, int y, char chr, char atr) {
 	if((x < 0) || (y < 0))
 		return;
 
+	x += (32/8)*2;
+
 	vram_adr = (char *)(VRAM_ADR + x + y * PARTS_Y * SIZE);
 //	put_chr88_pat(vram_adr, &mainram_data[chr * PARTS_X * PARTS_Y * 3]);
 	put_chr88_pat(vram_adr, &ds1_grp[chr * PARTS_X * PARTS_Y * 3]);
@@ -597,6 +601,8 @@ char chr;
 
 // VRAMíºèëÇ´
 void print_at(char x, char y, char *str) {
+	x += (32/8);
+
 	while ((chr = *(str++)) != '\0') {
 		if (chr < 0x20) chr = 0x20;
 		if(chr >= 'a')
@@ -720,9 +726,12 @@ int main(void)
 	cls();
 
 //	while(((k9 = inp(0x09)) & 0x80)){ /* ESC */
+#ifdef DEBUG2
 	for(;;) //{
+#endif
 		main2();
 
+#ifndef DEBUG2
 /*		if(fadeflag == 0){
 			fadeflag = 1;
 			if(!basic_mode)
@@ -740,6 +749,7 @@ int main(void)
 
 	cls();
 	clearBuffer();
+#endif
 	return NOERROR;
 }
 

@@ -295,8 +295,8 @@ void clear(unsigned short type)
 
 	if(type & 1){
 		for (i = 0; i < 80 * 400; i++){
-			*(bvram++) = 0;
-			*(rvram++) = 0;
+			*(bvram++) = 0x0;
+			*(rvram++) = 0x0;
 			*(gvram++) = 0;
 			*(ivram++) = 0;
 		}
@@ -612,7 +612,7 @@ void put_chr8_text(int x, int y, char chr, char atr)
 
 	if((x < 0) || (y < 0))
 		return;
-
+	x+=(32/8)*2;
 	vram[(x + y * 80) * 2] = chr;
 	vram[(x + y * 80) * 2+1] = 0;
 	vram[(x + y * 80) * 2 + 0x2000] = 0xe1;
@@ -624,6 +624,7 @@ void put_chr8(int x, int y, int chr, char atr)
 	if((x < 0) || (y < 0))
 		return;;
 
+	x+=(32/8)*2;
 	put_8(x, y, chr);
 }
 
@@ -640,6 +641,7 @@ static unsigned short chr;
 // VRAM’¼‘‚«
 void print_at(char x, char y, char *str) {
 	unsigned char __far *vram = (unsigned char far *)MK_FP(0xa000,0000L);
+	x+=(32/8)*2;
 
 	while ((chr = *(str++)) != '\0') {
 		if (chr < 0x20) chr = 0x20;

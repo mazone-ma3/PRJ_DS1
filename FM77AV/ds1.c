@@ -1,6 +1,8 @@
 /* ds1.c for GCC6809 FM77AV  m@3 */
 /* キャラを出す SUB CPUコマンド版 */
 
+#include "mode.h"
+
 #include "inkey.h"
 #include "ds1_grp.h"
 #include "font.h"
@@ -589,11 +591,11 @@ asm(
 	"sta	_keyflag\n"
 	"lda	keydt\n"
 	"sta	_keycode2\n"
-	"bra	end\n"
+	"bra	keyend\n"
 "error:\n"
 	"lda	#0\n"
 	"sta	_keyflag\n"
-"end:\n"
+"keyend:\n"
 );
 }
 
@@ -640,6 +642,7 @@ void beep(void)
 void put_chr8(int x, int y, char chr, char atr) {
 	if((x < 0) || (y < 0))
 		return;
+	x += (32/8)*2;
 
 	vram_adr = (char *)(x + y * 80 * 8);
 	put_sub2((char *)(ds1_grp + ((chr & 0x0f) * 2 + (chr & 0xf0) * 16)  * 3));
@@ -657,8 +660,7 @@ char chr;
 
 // VRAM直書き
 void print_at(char x, char y, char *str) {
-	register unsigned char *rx asm("x");
-	register unsigned char *ry asm("y");
+	x += (32/8);
 
 	while ((chr = *(str++)) != '\0') {
 		if (chr < 0x20) chr = 0x20;
@@ -800,8 +802,12 @@ asm(
 
 	key_clear();
 
+#ifdef DEBUG2
 	for(;;)
+#endif
 		main2();
+
+#ifndef DEBUG2
 	cls();
 
 	vram_off();
@@ -811,5 +817,6 @@ asm(
 	key_clear();
 
 	return 0;
+#endif
 }
 

@@ -486,7 +486,6 @@ void beep(void)
 void put_chr8_text(int x, int y, char chr, char atr)
 {
 	unsigned char __far *vram = (unsigned char far *)MK_FP(0xa000,0000L);
-
 	if((x < 0) || (y < 0))
 		return;
 }
@@ -495,6 +494,7 @@ void put_chr8(int x, int y, int chr, char atr)
 {
 	if((x < 0) || (y < 0))
 		return;;
+	x+=(32/8)*2;
 
 	put_8(x, y, chr);
 }
@@ -512,6 +512,7 @@ static unsigned short chr;
 // VRAM’¼‘‚«
 void print_at(char x, char y, char *str) {
 	unsigned char __far *vram = (unsigned char far *)MK_FP(0xa000,0000L);
+	x+=(32/8)*2;
 
 	while ((chr = *(str++)) != '\0') {
 		if (chr < 0x20) chr = 0x20;

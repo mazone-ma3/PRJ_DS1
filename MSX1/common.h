@@ -12,6 +12,15 @@ static char vram[MAP_H][MAP_W];  // 書き換え可能なマップ
 
 const int level_experience[10] = {0, 20, 50, 90, 140, 200, 270, 350, 440, 540};
 
+// ゲームモード
+enum {
+	MODE_PUZZLE,
+	MODE_BATTLE,
+	MODE_RETURN,
+	MODE_TITLE,
+	MODE_CLEAR
+};
+
 // 複数ステージ
 /*
 	"############"
@@ -158,7 +167,7 @@ int player_hp = 20;
 int player_atk = 5;
 int experience = 0;
 int level = 1;
-int game_mode = 0;  // 0:パズル, 1:バトル
+int game_mode = MODE_TITLE;  // 0:パズル, 1:バトル
 char battle_msg[40];
 char *pbattle_msg;
 int current_stage = 0;
@@ -180,14 +189,14 @@ void start_battle(void);
 void update_battle(void);
 
 int quotient = 0;
-int remainder = 0;
+int rem = 0;
 
 int divideBy10(int n) {
 	quotient = 0;
-	remainder = n;
+	rem = n;
 
-	while (remainder >= 10) {
-		remainder -= 10;
+	while (rem >= 10) {
+		rem -= 10;
 		quotient++;
 	}
 	return quotient;
@@ -243,51 +252,54 @@ int strcpy2(char *dst, char *src)
 	return size;
 }
 
+void init_status(void)
+{
+	player_hp = 20;
+	player_atk = 5;
+	experience = 0;
+	level = 1;
+	current_stage = 0;
+}
 
 void main2(void) {
 	define_tiles();
 //	fill_vram(0x01, 32*24);  // 初回クリア（床で埋める）
-
-	parse_map();
-	draw_background();
-	update_objects();
+start:
+//	parse_map();
+//	draw_background();
+//	update_objects();
 
 	for (;;) {
 //		print_at(PRINT_MUL * 24, 10,"012345678");
 //		print_at(PRINT_MUL * 24, 11,"ABCDEFG");
-		//sprintf(battle_msg, "STAGE:%d", current_stage+1);
-		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, "STAGE ");
-		pbattle_msg += itoa2(current_stage+1, pbattle_msg);
-//		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 24, 0, battle_msg);
-		//sprintf(battle_msg, "LEVEL:%d", level);
-		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, "LEVEL ");
-		pbattle_msg += itoa2(level, pbattle_msg);
-//		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 24, 1, battle_msg);
-		//sprintf(battle_msg, "HP:%d", player_hp);
-		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, "HP ");
-		pbattle_msg += itoa2(player_hp, pbattle_msg);
-//		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 24, 2, battle_msg);
-		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, "EXP ");
-		pbattle_msg += itoa2(experience, pbattle_msg);
-//		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 24, 3, battle_msg);
-		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, "GIVE UP");
-//		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 24, 4, battle_msg);
-		pbattle_msg = battle_msg;
-		pbattle_msg += strcpy2(pbattle_msg, A_KEY " KEY" );
-//		*pbattle_msg = '\0';
-		print_at(PRINT_MUL * 24, 5, battle_msg);
+		if((game_mode != MODE_TITLE) && (game_mode != MODE_CLEAR)){
+			pbattle_msg = battle_msg;
+			pbattle_msg += strcpy2(pbattle_msg, "STAGE ");
+			pbattle_msg += itoa2(current_stage+1, pbattle_msg);
+			print_at(PRINT_MUL * 24, 0, battle_msg);
 
-		if (game_mode == 0) {
+			pbattle_msg = battle_msg;
+			pbattle_msg += strcpy2(pbattle_msg, "LEVEL ");
+			pbattle_msg += itoa2(level, pbattle_msg);
+			print_at(PRINT_MUL * 24, 1, battle_msg);
+
+			pbattle_msg = battle_msg;
+			pbattle_msg += strcpy2(pbattle_msg, "HP ");
+			pbattle_msg += itoa2(player_hp, pbattle_msg);
+			print_at(PRINT_MUL * 24, 2, battle_msg);
+
+			pbattle_msg = battle_msg;
+			pbattle_msg += strcpy2(pbattle_msg, "EXP ");
+			pbattle_msg += itoa2(experience, pbattle_msg);
+			print_at(PRINT_MUL * 24, 3, battle_msg);
+		}
+
+		switch(game_mode){
+		case MODE_PUZZLE:
+			print_at(PRINT_MUL * 24, 4, "GIVE UP");
+			print_at(PRINT_MUL * 24, 5,  A_KEY " KEY" );
+			print_at(PRINT_MUL * 24, 6, "TITLE");
+			print_at(PRINT_MUL * 24, 7,  B_KEY " KEY" );
 			gravity_fall();
 			vsync();
 			keycode = keyscan();
@@ -296,8 +308,9 @@ void main2(void) {
 			}
 			if (keycode & KEY_B){
 #ifndef DEBUG
-				break;
-#else if
+				game_mode = MODE_RETURN;
+				cls();
+#else
 				gravity_x = goal_x; gravity_y = goal_y-1;
 #endif
 			}
@@ -319,10 +332,64 @@ void main2(void) {
 				if ((keycode == KEY_DOWN1) && try_move(0, 1)) { wait(4); update_objects(); play_sound_effect(); }
 				if ((keycode == KEY_UP1) && try_move(0, -1)) { wait(4); update_objects(); play_sound_effect(); }
 			}
-		} else {
+			break;
+		case MODE_BATTLE:
 			update_battle();
+			break;
+
+		case MODE_RETURN:
+			print_at(PRINT_MUL * 2, 10, "HIT " A_KEY " KEY TO TITLE");
+			print_at(PRINT_MUL * 2, 12, "HIT " B_KEY " KEY TO GAME");
+			while(keyscan());
+			for(;;){
+				keycode = keyscan();
+				if(keycode == KEY_A){
+					game_mode = MODE_TITLE;
+					cls();
+					break;
+				}else if(keycode == KEY_B){
+					game_mode = MODE_PUZZLE;
+					parse_map();
+					draw_background();
+					update_objects();
+					break;
+				}
+			}
+			break;
+
+		case MODE_TITLE:
+			print_at(PRINT_MUL * 6, 5, "DRAGON SWORD PART 1");
+			print_at(PRINT_MUL * 6, 18, "HIT " A_KEY " KEY TO START");
+#ifndef DEBUG2
+			print_at(PRINT_MUL * 6, 20, "HIT " B_KEY " KEY TO EXIT");
+#endif
+			while(keyscan());
+			for(;;){
+				keycode = keyscan();
+				if(keycode == KEY_A){
+					init_status();
+					game_mode = MODE_PUZZLE;
+					cls();
+					parse_map();
+					draw_background();
+					update_objects();
+					break;
+				}else if(keycode == KEY_B){
+					goto end;
+				}
+			}
+			while(keyscan());
+			break;
+
+		case MODE_CLEAR:
+			print_at(PRINT_MUL * 3, 10, "ALL CLEAR CONGRATULATIONS");
+			wait(600);
+			game_mode = MODE_TITLE;
+			cls();
+			break;
 		}
 	}
+end:;
 }
 
 void parse_map(void) {
@@ -413,7 +480,10 @@ void gravity_fall(void) {
 					cls();
 					player_hp = 20 + 5 * level;
 					current_stage++;
-					if (current_stage >= MAX_STAGES) current_stage = 0;
+					if (current_stage >= MAX_STAGES){
+						game_mode = MODE_CLEAR;//current_stage = 0;
+						return;
+					}
 					parse_map();
 					draw_background();
 					update_objects();
@@ -466,7 +536,7 @@ void update_objects(void) {
 }
 
 void start_battle(void) {
-	game_mode = 1;
+	game_mode = MODE_BATTLE;
 	enemy_hp = 10 + (level - 1) * 5;
 	enemy_atk = 3 + ((level - 1) * 3 / 2);
 	strcpy2(battle_msg, "Slime appeared");
@@ -503,7 +573,7 @@ void damage_battle(void) {
 		player_hp = 20 + 5 * level;
 		wait(60);
 		cls();
-		game_mode = 0;
+		game_mode = MODE_PUZZLE;
 		parse_map();
 		draw_background();
 		update_objects();
@@ -530,7 +600,7 @@ void update_battle(void) {
 			print_at(PRINT_MUL * 5, 10, battle_msg);
 			wait(60);
 			cls();
-			game_mode = 0;
+			game_mode = MODE_PUZZLE;
 			draw_background();
 			update_objects();
 		} else {
@@ -544,7 +614,7 @@ void update_battle(void) {
 			print_at(PRINT_MUL * 5, 16, battle_msg);
 			wait(60);
 			cls();
-			game_mode = 0;
+			game_mode = MODE_PUZZLE;
 			draw_background();
 			update_objects();
 		} else {

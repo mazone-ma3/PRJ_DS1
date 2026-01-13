@@ -2,7 +2,7 @@
 
 ;include "BinSize.inc"
 
-size = 23000 ;22707
+size = 24000 ;22707
 ;0x4353
 Sector = 256
 count = (size+Sector-1)/Sector

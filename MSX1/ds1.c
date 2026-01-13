@@ -1,8 +1,9 @@
-// ds1_full.c - Dragon Sword 1 Complete Prototype (MSX1 / z88dk)
-// 2025/12/26 Compiled
+/* ds1.c - Dragon Sword 1 MSX1 z88dk */
 //#pragma output CRT_MODEL = 1
 //#pragma output CRT_ORG_CODE = 0x4000 // 開始アドレス
 //#pragma output CRT_SIZE_CODE = 16384 // 32KBを指定
+
+#include "mode.h"
 
 #include <msx.h>
 #include <msx/gfx.h>
@@ -49,7 +50,14 @@ enum {
 	TILE_GRAVITY = 0x10,   // 重力パネル（B） - 下向き矢印付き
 	TILE_GOAL = 0x14,   // ゴール
 	TILE_HOLLOW = 0x18,  // 格子状の壁
-	TILE_SLIME = 0x1c   // スライム
+
+	TILE_SLIME = 0x1c,   // スライム
+	TILE_MILE = 0x20,
+	TILE_OLDMAN = 0x24,
+	TILE_BAT = 0x28,
+	TILE_STONE = 0x2c,
+	TILE_MUMMY = 0x30,
+	TILE_ARMOR = 0x34
 };
 
 #define PRINT_MUL 1
@@ -437,17 +445,60 @@ void play_sound_effect(void) {
 
 #include "common.h"
 
+#ifndef DEBUG2
+void key_flush(void)
+{
+__asm
+	push	ix
+	ld	a,(#0xfcc1)	; exptbl
+	ld	d,a
+	ld	e,0
+	push	de
+	pop	iy
+	ld ix,#0x0156	; KILBUF(MAINROM)
+
+	call	#0x001c	; CALSLT
+	pop	ix
+__endasm;
+}
+
+#define forclr ((unsigned char *)0xf3e9)
+#define bakclr ((unsigned char *)0xf3ea)
+#define bdrclr ((unsigned char *)0xf3eb)
+#define clicksw ((unsigned char *)0xf3db)
+#define oldscr ((unsigned char *)0xfcb0)
+
+unsigned char forclr_old, bakclr_old, bdrclr_old, clicksw_old;
+#endif
+
 #define clicksw ((unsigned char *)0xf3db)
 
 int main(void)
 {
+#ifndef DEBUG2
+	forclr_old = *forclr;
+	bakclr_old = *bakclr;
+	bdrclr_old = *bdrclr;
+	clicksw_old = *clicksw;
+#endif
+
 	*clicksw = 0;
 	msx_color(15, 1, 1);
 //	set_mode(1);
 	set_mangled_mode();
 
+#ifdef DEBUG2
 	for(;;)
+#endif
 		main2();
 
+#ifndef DEBUG2
+	msx_color(forclr_old, bakclr_old, bdrclr_old);
+
+	set_mode(*oldscr);
+	*clicksw = clicksw_old;
+
+	key_flush();
+#endif
 	return 0;
 }

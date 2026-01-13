@@ -2,6 +2,8 @@
 /* .com版 スタンダードモードで起動して下さい 
 /* キャラを出す  */
 
+#include "mode.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 //#include <string.h>
@@ -763,6 +765,7 @@ void beep(void)
 void put_chr8(int x, int y, char chr, char atr) {
 	if((x < 0) || (y < 0))
 		return;
+	x+=(32/8)*2;
 	VPOKE(x + y * 80, chr);
 	outp(0x2000 + x + y * 80, atr);
 }
@@ -974,8 +977,12 @@ int main(void)
 	cls();
 
 /*	do{*/
+#ifdef DEBUG2
 	for(;;)
+#endif
 		main2();
+
+#ifndef DEBUG2
 /*		if(fadeflag == 0){
 			fadeflag = 1;
 			if(inp(0x1fb0) == 0x90){
@@ -1010,7 +1017,7 @@ int main(void)
 	outp(0x1300, 0x00);
 
 	clearBuffer();
-
+#endif
 	return NOERROR;
 }
 

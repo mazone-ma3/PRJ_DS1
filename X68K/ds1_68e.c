@@ -431,6 +431,7 @@ void put_chr8(int x, int y, int chr, char atr)
 {
 	if((x < 0) || (y < 0))
 		return;;
+	x+=(128/8);
 
 	put_8(x, y, chr);
 }
@@ -447,6 +448,7 @@ static unsigned short chr;
 
 // VRAM’¼‘‚«
 void print_at(char x, char y, char *str) {
+	x+=(128/8);
 	while ((chr = *(str++)) != '\0') {
 		if (chr < 0x20) chr = 0x20;
 		if(chr >= 'a')
