@@ -163,14 +163,48 @@ void wait(int j) {
 		vsync();
 }
 
+void cls_bios(void)
+{
+__asm
+	push	hl
+	push	iy
+	push	ix
+
+	push	af
+	push	bc
+	push	de
+
+	xor	a
+	ld	a,(#0xfcc1)	; exptbl
+	ld	d,a
+	ld	e,#0
+	push	de
+	pop	iy
+	ld ix,#0x00c3	; CLS(MAINROM)
+
+	call	#0x001c	; CALSLT
+
+	pop	de
+	pop	bc
+	pop	af
+
+	pop	ix
+	pop	iy
+	pop	hl
+__endasm;
+}
+
 void cls(void) {
-	int i,j;
+//	int i,j;
+	cls_bios();
+
 	vdp_put_sprite_16(0,0,208,0,0);
 	vdp_put_sprite_16(1,0,208,0,0);
 	vdp_put_sprite_16(2,0,208,0,0);
-	for(j = 0l; j < 24; j++)
+
+/*	for(j = 0l; j < 24; j++)
 		for(i = 0; i < 32; ++i)
-			put_chr8(i, j, ' ');
+			put_chr8(i, j, ' ');*/
 }
 
 // タイルパターン定義 (8x8)
@@ -394,6 +428,8 @@ __asm
 __endasm;
 	return 0;
 }
+
+
 
 unsigned char st0, st1, pd0, pd1, pd2, k3, k5, k7, k9, k10;
 unsigned char keycode = 0;
