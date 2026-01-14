@@ -464,6 +464,27 @@ void print_at(char x, char y, char *str) {
 	}
 }
 
+void print_at_2(char x, char y, char *str) {
+	x+=(128/8);
+	while ((chr = *(str++)) != '\0') {
+		if (chr < 0x20) chr = 0x20;
+		if(chr >= 0x30)
+			chr -= 0x30;
+		else
+			chr = 0x10;
+
+		put_8_font(x, y, (chr % 16) + (chr / 16) * 16 * 16);
+
+		x+=2;
+	}
+}
+
+void put_logo(int x, int y)
+{
+	print_at_2(x, y, "      i  k   ");
+	print_at_2(x, y+1, " 2026 bcdefgh");
+}
+
 // vsync
 void vsync(void) {
 	wait_vsync();

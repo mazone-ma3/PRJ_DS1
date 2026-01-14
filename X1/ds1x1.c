@@ -10,6 +10,7 @@
 #include <conio.h>
 
 #include "ds1_pcg.h"
+//#include "fontpcg.h"
 #include "inkey.h"
 
 #define A_KEY "Z"
@@ -790,9 +791,42 @@ void print_at(int x, int y, char *str) {
 	char chr;
 	while ((chr = *(str++)) != '\0') {
 		if (chr < 0x20) chr = 0x20;
-		put_chr8(x++, y, chr, 0x87);
-		put_chr8(x++, y, chr, 0x87);;
+//		put_chr8(x++, y, chr, 0x87);
+//		put_chr8(x++, y, chr, 0x87);;
+
+		if(chr >= 'a')
+			chr -= ('a'-'A');
+		if(chr >= 0x30)
+			chr -= 0x30;
+		else
+			chr = 0x10;
+
+		put_chr8(x++, y, chr*2 + 128, 0x27);
+		put_chr8(x++, y, chr*2 + 129, 0x27);
 	}
+}
+
+void print_at_2(int x, int y, char *str) {
+	char chr;
+	while ((chr = *(str++)) != '\0') {
+		if (chr < 0x20) chr = 0x20;
+//		put_chr8(x++, y, chr, 0x87);
+//		put_chr8(x++, y, chr, 0x87);;
+
+		if(chr >= 0x30)
+			chr -= 0x30;
+		else
+			chr = 0x10;
+
+		put_chr8(x++, y, chr*2 + 128, 0x27);
+		put_chr8(x++, y, chr*2 + 129, 0x27);
+	}
+}
+
+void put_logo(int x, int y)
+{
+	print_at_2(x, y, "      i  k   ");
+	print_at_2(x, y+1, " 2026 bcdefgh");
 }
 
 // vsync

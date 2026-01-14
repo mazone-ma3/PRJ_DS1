@@ -150,6 +150,11 @@ void print_at(int x, int y, char *str) {
 	}
 }
 
+void put_logo(int x, int y)
+{
+	print_at(x, y+1, " 2026 maZone");
+}
+
 // vsync (jiffyégóp)
 unsigned char *jiffy = (unsigned char *)0xfc9e, old_jiffy;
 void vsync(void) {

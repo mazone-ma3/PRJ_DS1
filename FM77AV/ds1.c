@@ -676,6 +676,27 @@ void print_at(char x, char y, char *str) {
 	}
 }
 
+void print_at_2(char x, char y, char *str) {
+	x += (32/8);
+
+	while ((chr = *(str++)) != '\0') {
+		if (chr < 0x20) chr = 0x20;
+		if(chr >= 0x30)
+			chr -= 0x30;
+		else
+			chr = 0x10;
+
+		vram_adr = (char *)((x++) * 2 + y * 80 * 8);
+		put_sub2((char *)(font_grp + ((chr & 0x0f) * 2 + (chr & 0xf0) * 16)  * 3));
+	}
+}
+
+void put_logo(int x, int y)
+{
+	print_at_2(x, y, "      i  k   ");
+	print_at_2(x, y+1, " 2026 bcdefgh");
+}
+
 void wait_vsync(void)
 {
 	unsigned char *submode = (unsigned char *)0xfd12;

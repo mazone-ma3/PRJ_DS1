@@ -618,6 +618,28 @@ void print_at(char x, char y, char *str) {
 	}
 }
 
+void print_at_2(char x, char y, char *str) {
+	x += (32/8);
+
+	while ((chr = *(str++)) != '\0') {
+		if (chr < 0x20) chr = 0x20;
+		if(chr >= 0x30)
+			chr -= 0x30;
+		else
+			chr = 0x10;
+
+		vram_adr = (char *)(VRAM_ADR + (x++) * PARTS_X + y * PARTS_Y * SIZE);
+//		put_chr88_pat(vram_adr, &font_data[chr * PARTS_X * PARTS_Y * 3]);
+		put_chr88_pat(vram_adr, &font_grp[chr * PARTS_X * PARTS_Y * 3]);
+	}
+}
+
+void put_logo(int x, int y)
+{
+	print_at_2(x, y, "      i  k   ");
+	print_at_2(x, y+1, " 2026 bcdefgh");
+}
+
 // vsync
 void vsync(void) {
 	wait_vsync();

@@ -398,6 +398,7 @@ start:
 
 		case MODE_TITLE:
 			print_at(PRINT_MUL * 6, 5, "DRAGON SWORD PART 1");
+			put_logo(PRINT_MUL * 8, 15);
 			print_at(PRINT_MUL * 6, 18, "HIT " A_KEY " KEY TO START");
 #ifndef DEBUG2
 			print_at(PRINT_MUL * 6, 20, "HIT " B_KEY " KEY TO EXIT");
