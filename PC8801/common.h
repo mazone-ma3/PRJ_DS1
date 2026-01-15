@@ -309,6 +309,7 @@ start:
 //	update_objects();
 
 	for (;;) {
+		simple_rnd();
 //		print_at(PRINT_MUL * 24, 10,"012345678");
 //		print_at(PRINT_MUL * 24, 11,"ABCDEFG");
 		if((game_mode != MODE_TITLE) && (game_mode != MODE_CLEAR)){
@@ -361,7 +362,7 @@ start:
 				draw_background();
 				update_objects();
 			}
-			else if (keycode && ((simple_rnd() & 0x7F) < 3)) {  // –ñ2% (3/128)
+			else if (keycode && (simple_rnd() < 6)) {  // –ñ2% (6/256)
 #ifndef DEBUG
 				start_battle();
 #endif
@@ -388,7 +389,6 @@ start:
 					break;
 				}else if(keycode == KEY_B){
 					game_mode = MODE_PUZZLE;
-					parse_map();
 					draw_background();
 					update_objects();
 					break;
@@ -649,7 +649,7 @@ void update_battle(void) {
 		play_sound_effect();
 		wait(10);
 	} else if (keycode & KEY_B) {  // “¦‚°‚é
-		if (simple_rnd() & 0xE0) {  // –ñ87%¬Œ÷ (224/256)
+		if ((simple_rnd() < 153)) {  // –ñ60%¬Œ÷ (153/256)
 			strcpy2(battle_msg, "Escaped");
 			print_at(PRINT_MUL * 5, 16, battle_msg);
 			wait(60);
