@@ -649,7 +649,7 @@ void update_battle(void) {
 		play_sound_effect();
 		wait(10);
 	} else if (keycode & KEY_B) {  // “¦‚°‚é
-		if ((simple_rnd() & 0x80)) {  // –ñ50%¬Œ÷ (128/256)
+		if ((simple_rnd() < 153)) {  // –ñ60%¬Œ÷ (153/256)
 			strcpy2(battle_msg, "Escaped");
 			print_at(PRINT_MUL * 5, 16, battle_msg);
 			wait(60);
