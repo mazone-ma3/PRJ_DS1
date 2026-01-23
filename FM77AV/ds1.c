@@ -871,7 +871,6 @@ int main(void)
 	subcpu_flag = 0;
 
 	cursor_off();
-	vram_off();
 
 	/* ジョイスティック設定 */
 asm(
