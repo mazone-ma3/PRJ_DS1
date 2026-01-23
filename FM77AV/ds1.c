@@ -242,6 +242,7 @@ asm(
 void reset_key_irq(void)
 {
 asm(
+	"orcc	#0x10\n"
 	"ldx		_IRQJP\n"
 	"stx		0xFFF8\n"
 	"bra	_ENDIRQ\n"
