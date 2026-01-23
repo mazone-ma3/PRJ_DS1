@@ -23,6 +23,19 @@ top= 0x1600
 ;cseg
 __start:
 ;	bra	__start
+
+	LDS  #0x7FFF    ; ハードウェアスタックを$7FFFに設定\n
+	LDU  #0x7F00
+	lda #1
+	sta 0xfd13	;サブモニタROMをAに
+
+	LDX #top	  ; 開始アドレス
+	LDD #0x0000	  ; Dレジスタ(A+B)を0にする
+LOOP:
+	STD ,X++		; 16ビット一気に書き込み、Xを+2する
+	CMPX #0x8000
+	BNE LOOP
+
 	lda #24
 	sta RQNO
 	ldx #RCB

@@ -223,8 +223,8 @@ asm(
 "_TINIT:\n"
 	"orcc	#0x10\n"
 	"ldx		0xFFF8\n"
-	"cmpx	#_IRQET\n"
-	"beq		_TCLOSE\n"
+	";cmpx	#_IRQET\n"
+	";beq		_TCLOSE\n"
 	"stx		_IRQJP\n"
 	"ldx		#_IRQET\n"
 	"stx		0x0FFF8\n"
@@ -234,8 +234,14 @@ asm(
 	"ora	#1\n"
 	"sta		0xFD02\n"
 
-	"bra	_ENDIRQ\n"
 "_TCLOSE:\n"
+	"bra	_ENDIRQ\n"
+);
+}
+
+void reset_key_irq(void)
+{
+asm(
 	"ldx		_IRQJP\n"
 	"stx		0xFFF8\n"
 	"bra	_ENDIRQ\n"
@@ -848,13 +854,12 @@ asm(
 
 int main(void)
 {
-asm(
+/*asm(
 	"LDS  #0x7FFF    ; ハードウェアスタックを$7FFFに設定\n"
 	"LDU  #0x7F00\n"
 	"lda #1\n"
 	"sta 0xfd13\n	;サブモニタROMをAに"
-);
-
+);*/
 	mmr = (unsigned char *)0xFD80;
 	mem = (unsigned char *)0x6AFF;
 	msr = (unsigned char *)0xFD93;
@@ -865,6 +870,7 @@ asm(
 	subcpu_flag = 0;
 
 	cursor_off();
+	vram_off();
 
 	/* ジョイスティック設定 */
 asm(
@@ -895,7 +901,7 @@ asm(
 	cls();
 
 	vram_off();
-	set_key_irq();
+	reset_key_irq();
 	keyrepeat_on();
 	keyscan_off();
 	key_clear();
