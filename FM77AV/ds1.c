@@ -571,6 +571,67 @@ asm(
 }
 
 
+void cursor_off(void)
+{
+asm(
+	"jsr	_SUBHLTC1\n"
+
+	"lda	#0x3f\n"
+	"sta	0xfc82\n"
+	"lda	#0x00"
+	"sta	_subcpu_flag\n"
+	"jsr	_MOVCMDC\n"
+	"jsr	_SUBMOVEC\n"
+	"bra	_ENDCDC\n"
+
+"_SUBHLTC1:\n"
+	"lda	0xfd05\n"
+	"bmi	_SUBHLTC1\n"
+	"orcc	#0x50\n"
+	"lda	#0x80\n"
+	"sta	0xfd05\n"
+"_SUBHLTC2:\n"
+	"lda	0xfd05\n"
+	"bpl	_SUBHLTC2\n"
+	"rts\n"
+
+"_RDYREQC:\n"
+	"lda	0xfc80\n"
+	"ora	#0x80\n"
+	"sta	0xfc80\n"
+	"rts\n"
+
+"_SUBMOVEC:\n"
+	"clra\n"
+	"sta	0xfd05\n"
+	"andcc	#0xaf\n"
+	"rts\n"
+
+"_MOVCMDC:\n"
+	"ldx	#_TESTCDC\n"
+	"ldy	#0xfc82\n"
+"_LOOPC1:\n"
+	"lda	,X+\n"
+	"sta	,Y+\n"
+	"cmpx	#_ENDCDC\n"
+	"bne	_LOOPC1\n"
+	"rts\n"
+
+"_TESTCDC:\n"
+	".byte	0x3f\n"
+	".blkb	8\n"
+	".byte	0x93\n"
+	".word	0xd38f\n"
+	".byte	0x90\n"
+
+	"lda	#0x00"
+	"sta	0xd004\n"
+	"rts\n"
+
+"_ENDCDC:\n"
+);
+}
+
 void get_key(void)
 {
 asm(
@@ -802,6 +863,8 @@ asm(
 	opncom = (unsigned char *)OPNCOM;
 	opndat = (unsigned char *)OPNDAT;
 	subcpu_flag = 0;
+
+	cursor_off();
 
 	/* ジョイスティック設定 */
 asm(
