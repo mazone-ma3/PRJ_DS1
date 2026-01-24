@@ -5,7 +5,7 @@ AS      = as6809
 LD      = aslink
 OBJCOPY = objcopy
 
-CFLAGS  = -c
+CFLAGS  = -O0 -c
 LIBPATH = /usr/local/lib/gcc/m6809-unknown-none/4.3.6/
 LDFLAGS = -b .text=0x1600 -s -l $(LIBPATH)libgcc.a
 

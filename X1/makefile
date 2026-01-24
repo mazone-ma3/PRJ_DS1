@@ -2,7 +2,7 @@
 TARGET   = ds1x1
 CC       = zcc
 
-# PC-8801用フラグ (SDCC, 速度優先, 引数渡しをsdcccall0に固定)
+# X1用フラグ (SDCC, 速度優先, 引数渡しをsdcccall0に固定)
 CFLAGS   = +x1 -compiler sdcc --opt-code-speed --sdcccall0
 LDFLAGS  = +x1 -create-app -lm
 
