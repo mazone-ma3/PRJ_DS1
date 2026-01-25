@@ -289,7 +289,6 @@ void clear(short type)
 void pal_set(int pal_no, unsigned short color, unsigned short red, unsigned short green,
 	unsigned short blue)
 {
-	unsigned short *pal_port;
 	unsigned char mode = 0;
 	if(color)
 		mode = 1;
@@ -300,14 +299,11 @@ void pal_set(int pal_no, unsigned short color, unsigned short red, unsigned shor
 
 	switch(pal_no){
 		case 0:
-			pal_port = (unsigned short *)(0xe82200); // + color * 2);
-			*(pal_port+color) = (green * 32 * 32 + red * 32 + blue) * 2 + mode;
-//			pal_port = (unsigned short *)(0xe82220); // + color * 2);
-//			*(pal_port+color) = (green * 32 * 32 + red * 32 + blue) * 2 + mode;
+			*((unsigned short *)(0xe82200)+color) = (green * 32 * 32 + red * 32 + blue) * 2 + mode;
+//			*((unsigned short *)(0xe82220)+color) = (green * 32 * 32 + red * 32 + blue) * 2 + mode;
 			break;
 		case 1:
-			pal_port = (unsigned short *)(0xe82000); // + color * 2);
-			*(pal_port+color) = (green * 32 * 32 + red * 32 + blue) * 2 + mode;
+			*((unsigned short *)(0xe82000)+color) = (green * 32 * 32 + red * 32 + blue) * 2 + mode;
 			break;
 	}
 }
