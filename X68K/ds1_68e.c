@@ -167,10 +167,11 @@ unsigned char org_pal[16][3] = {
 	{ 11, 11, 11},
 	{ 15, 15, 15},
 };*/
-unsigned char *bvram, *rvram, *gvram, *ivram; 
 
-unsigned char *vram_adr;
-
+#define bvram ((unsigned char *)0xe00000)
+#define rvram ((unsigned char *)0xe20000)
+#define gvram ((unsigned char *)0xe40000)
+#define ivram ((unsigned char *)0xe60000)
 
 void put_8(unsigned short x, unsigned short y, unsigned short no)
 {
@@ -258,10 +259,10 @@ void end()
 void paint(unsigned short color)
 {
 	unsigned short i, j, k;
-	unsigned long *p0 = (unsigned long *)vram_adr + 0x20000 * 0 / 4;
-	unsigned long *p1 = (unsigned long *)vram_adr + 0x20000 * 1 / 4;
-	unsigned long *p2 = (unsigned long *)vram_adr + 0x20000 * 2 / 4;
-	unsigned long *p3 = (unsigned long *)vram_adr + 0x20000 * 3 / 4;
+	unsigned long *p0 = (unsigned long *)bvram;
+	unsigned long *p1 = (unsigned long *)rvram;
+	unsigned long *p2 = (unsigned long *)gvram;
+	unsigned long *p3 = (unsigned long *)ivram;
 
 	for (i = 0; i < 512; ++i){
 		for (j = 0; j < (0x80 / 4); ++j){
@@ -511,12 +512,13 @@ void play_sound_effect(void) {
 	beep();  // シンプルなビープ音
 }
 
+#define reg ((unsigned char *)0xe9a001)
+
 unsigned char keycode;
 
 unsigned char keyscan(void)
 {
 	unsigned char k5, k6, k7, k8, k9, st, pd;
-	unsigned char *reg = (unsigned char *)0xe9a001;
 	unsigned short paddata;
 	keycode = 0;
 
@@ -555,23 +557,14 @@ unsigned char keyscan(void)
 #include "common.h"
 
 int	main(int argc,char **argv){
-	unsigned char *reg = (unsigned char *)0xe9a001;
 	unsigned char fadeflag = 0;
 
 dum:	_iocs_b_super(0);		/* スーパーバイザモード 最適化防止にラベルを付ける */
-
-	vram_adr = (unsigned char *)0xe00000;
-
-	bvram = (unsigned char *)0xe00000;
-	rvram = (unsigned char *)0xe20000;
-	gvram = (unsigned char *)0xe40000;
-	ivram = (unsigned char *)0xe60000;
 
 	g_init();
 
 	pal_all(0,org_pal);
 	clear(3);
-	vram_adr = (unsigned char *)0xe00000;
 //	pal_allblack(0);
 
 #ifdef DEBUG2
@@ -581,7 +574,6 @@ dum:	_iocs_b_super(0);		/* スーパーバイザモード 最適化防止にラベルを付ける */
 
 	fadeoutblack(org_pal, 0, 3);
 
-	vram_adr = (unsigned char *)0xe00000;
 	clear(3);
 	end();
 
