@@ -875,7 +875,7 @@ __endasm;
 
 //	chr = inp(0);
 	inp(0);
-
+/*
 	for(j = 0; j < 25; ++j){
 		for(i = 0; i < 80; ++i){
 			vram_ofs = i + j * SIZE;
@@ -883,6 +883,29 @@ __endasm;
 			outp(0x3000 + vram_ofs, 0);
 		}
 	}
+*/
+__asm
+	ld	bc,2000h
+loop2:
+	out	(c),0
+	ld	hl,1000h
+	add	hl,bc
+	ld	c,l
+	ld	b,h
+	out	(c),0
+	ld	hl,-1000h+1
+	add	hl,bc
+	ld	c,l
+	ld	b,h
+
+	ld	a,b
+	cp	#0x27
+	jr	nz,loop2
+	ld	a,c
+	cp	#0xd0
+	jr	nz,loop2
+
+__endasm;
 
 	EI();
 
