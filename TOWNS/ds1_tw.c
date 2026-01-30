@@ -777,6 +777,8 @@ __asm{
 	outp(0x448,0);
 	outp(0x44a,0x11);	// layer 0 DISPLAY ON, layer 1 DISPLAY OFF
 
+	outpm(0xc000, 0xff82, 0x67); // All Plane Display
+
 	cls();
 
 #ifdef DEBUG2

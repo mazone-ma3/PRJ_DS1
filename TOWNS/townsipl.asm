@@ -56,7 +56,8 @@ boot:
 	mov	 sp, 0B000h	  ; ロード領域の下にスタック
 	sti
 
-	jmp	read
+;	jmp	read
+	jmp	grp
 
 	mov	dx,0fda0h
 	xor	al,al
@@ -98,26 +99,30 @@ loops:
 ;	mov	al,0
 ;	out	dx,al
 
+grp:
 	; 画面FILL (VRAM C0000h - を青で塗りつぶし)
 	mov	al,000h	; VRAM
 	mov dx,0404h
 	out	dx,al
 
-	mov	al,67h; 0l100111b	; all plane display
-	mov	dx,0ff82h
-	out	dx,al
-
-	mov	al,00001111b	; All plane write
-	mov	dx,0ff81h
-	out	dx,al
-
-	mov	al,00000000b	; vram page 0 write
-	mov	dx,0ff83h
-	out	dx,al
-
-loop2:
 	mov	 ax, 0C000h
 	mov	 es, ax
+
+	mov	al,67h; 0l100111b	; all plane display
+	mov	bx,0ff82h
+	mov	es:[bx],al
+
+	mov	al,00001111b	; All plane write
+	mov	bx,0ff81h
+	mov	es:[bx],al
+
+	mov	al,00000000b	; vram page 0 write
+	mov	bx,0ff83h
+	mov	es:[bx],al
+
+loop2:
+;	mov	 ax, 0C000h
+;	mov	 es, ax
 	xor	 di, di
 	mov	 cx, 4000h	   ; 16K words = 32KB
 	mov	 ax, 0h ;fFfFh
@@ -194,12 +199,13 @@ load_error:
 	push	cx
 	push	dx
 
-	mov	al,00000010b	; C1 plane write
-	mov	dx,0ff81h
-	out	dx,al
-
 	mov	 ax, 0C000h
 	mov	 es, ax
+
+	mov	al,00000010b	; C1 plane write
+	mov	bx,0ff81h
+	mov	es:[bx],al
+
 	xor	 di, di
 	mov	 cx, 4000h
 	mov	 ax, 0ffFfh	   ;
