@@ -293,23 +293,54 @@ void clear(unsigned short type)
 {
 	unsigned short i;
 
+	unsigned short __far *bvram = ((unsigned short __far *)MK_FP(0xa800, 0));
+	unsigned short __far *rvram = ((unsigned short __far *)MK_FP(0xb000, 0));
+	unsigned short __far *gvram = ((unsigned short __far *)MK_FP(0xb800, 0));
+	unsigned short __far *ivram = ((unsigned short __far *)MK_FP(0xe000, 0));
+
 	if(type & 1){
-		for (i = 0; i < 80 * 400; i++){
-			*(bvram++) = 0x0;
-			*(rvram++) = 0x0;
-			*(gvram++) = 0;
-			*(ivram++) = 0;
-		}
+/*		for (i = 0; i < 80 * 400 / 2; i++){
+			*(bvram++) = 0x0000;
+			*(rvram++) = 0x0000;
+			*(gvram++) = 0x0000;
+			*(ivram++) = 0x0000;
+		}*/
+_asm{
+	push	ax
+	push	bx
+	push	es
+	mov	bx,0
+loopclear:
+	mov	ax,0a800h
+	mov	es,ax
+	mov	word ptr es:[bx],0
+
+	mov	ax,0b000h
+	mov	es,ax
+	mov	word ptr es:[bx],0
+
+	mov	ax,0b800h
+	mov	es,ax
+	mov	word ptr es:[bx],0
+
+	mov	ax,0e000h
+	mov	es,ax
+	mov	word ptr es:[bx],0
+
+	add	bx,2
+	cmp	bx,80*400
+	jnz	loopclear
+
+	pop	es
+	pop	bx
+	pop	ax
+}
 	}
 #ifndef DEBUG2
 	if(type & 2)
 		printf("\x1b*");
 #endif
 
-	bvram = ((unsigned char __far *)MK_FP(0xa800, 0));
-	rvram = ((unsigned char __far *)MK_FP(0xb000, 0));
-	gvram = ((unsigned char __far *)MK_FP(0xb800, 0));
-	ivram = ((unsigned char __far *)MK_FP(0xe000, 0));
 }
 
 /*パレット・セット*/

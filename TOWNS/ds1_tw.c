@@ -264,16 +264,31 @@ void cursor_switch(unsigned short mode)
 void clear(unsigned short type)
 {
 	unsigned short i;
-	unsigned char __far *w;
+	unsigned short __far *w;
 
 	if(type & 1){
-		for (i = 0; i < 80 * 400; i++){
+		outpm(0xc000, 0xff81, 0x0f);
+/*		for (i = 0; i < 80 * 400/2; i++){
 			w = MK_FP(0xc000,i);
+			*w = 0;
+		}*/
+_asm{
+	push	ax
+	push	bx
+	push	es
+	mov	ax,0c000h
+	mov	es,ax
+	mov	bx,0
+loopclear:
+	mov	word ptr es:[bx],0
+	add	bx,2
+	cmp	bx,80*400
+	jnz	loopclear
 
-			outpm(0xc000, 0xff81, 0x0f);
-			*((unsigned short __far *)(unsigned char __far *)(w))
-				 = 0;
-		}
+	pop	es
+	pop	bx
+	pop	ax
+}
 	}
 #ifndef DEBUG2
 //	if(type & 2)
