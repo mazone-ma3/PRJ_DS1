@@ -4,7 +4,7 @@ CC          = m68k-xelf-gcc
 AS          = m68k-xelf-as
 
 # X68000(68000)ターゲット、最適化、文字コード変換（SJIS出力）
-CFLAGS      = -m68000 -O2 -finput-charset=utf-8 -fexec-charset=cp932
+CFLAGS      = -m68000 -O1 -finput-charset=utf-8 -fexec-charset=cp932
 # リンクオプション：0x6800番地開始、シンボル削除、数学ライブラリ
 LDFLAGS     = -Ttext=0x6800 -s -lm
 

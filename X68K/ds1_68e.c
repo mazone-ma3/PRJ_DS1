@@ -258,21 +258,49 @@ void end()
 
 void paint(unsigned short color)
 {
-	unsigned short i, j, k;
+/*	unsigned short i, j, k;
 	unsigned long *p0 = (unsigned long *)bvram;
 	unsigned long *p1 = (unsigned long *)rvram;
 	unsigned long *p2 = (unsigned long *)gvram;
 	unsigned long *p3 = (unsigned long *)ivram;
+*/
+	register long rd0 asm("d0");
+	register long ra0 asm("a0");
+	register long ra1 asm("a1");
+	register long ra2 asm("a2");
+	register long ra3 asm("a3");
 
-	for (i = 0; i < 512; ++i){
+	rd0 = (unsigned long)color;
+	ra0 = (unsigned long)bvram;
+	ra1 = (unsigned long)rvram;
+	ra2 = (unsigned long)gvram;
+	ra3 = (unsigned long)ivram;
+
+/*	for (i = 0; i < 512; ++i){
 		for (j = 0; j < (0x80 / 4); ++j){
 			k = j + i * (0x80 / 4);
-			*(p0 + k) = color; /* bit */;
-			*(p1 + k) = color; /* bit */;
-			*(p2 + k) = color; /* bit */;
-			*(p3 + k) = color; /* bit */;
+			*(p0 + k) = color; // bit;
+			*(p1 + k) = color; // bit;
+			*(p2 + k) = color; // bit;
+			*(p3 + k) = color; // bit;
 		}
 	}
+*/
+//looppaint:
+asm volatile(
+	"move.l	#0,%%d1\n"
+"looppaint:\n"
+	"move.l	%%d0,(%%a0, %%d1)\n"
+	"move.l	%%d0,(%%a1, %%d1)\n"
+	"move.l	%%d0,(%%a2, %%d1)\n"
+	"move.l	%%d0,(%%a3, %%d1)\n"
+	"add.l	#4,%%d1\n"
+	"cmp.l	#0x80*512,%%d1\n"
+	"bne	looppaint\n"
+	:			/* 値が返るレジスタ変数 */
+	:"d"(rd0),"d"(ra0),"d"(ra1),"d"(ra2),"d"(ra3)	/* 引数として使われるレジスタ変数 */
+	:"d1"		/* 破壊されるレジスタ */
+);
 }
 
 /*テキスト画面及びグラフィック画面の消去*/
