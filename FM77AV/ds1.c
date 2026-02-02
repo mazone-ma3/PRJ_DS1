@@ -69,12 +69,12 @@ unsigned char i, j;
 #define OPNCOM 0xFD15
 #define OPNDAT 0xFD16
 
-#define mmr ((unsigned char *)0xFD80)
-#define mem ((unsigned char *)0x6AFF)
-#define msr ((unsigned char *)0xFD93)
-#define keyport ((unsigned char *)0xFD01)
-#define opncom ((unsigned char *)OPNCOM)
-#define opndat ((unsigned char *)OPNDAT)
+#define mmr ((volatile unsigned char *)0xFD80)
+#define mem ((volatile unsigned char *)0x6AFF)
+#define msr ((volatile unsigned char *)0xFD93)
+#define keyport ((volatile unsigned char *)0xFD01)
+#define opncom ((volatile unsigned char *)OPNCOM)
+#define opndat ((volatile unsigned char *)OPNDAT)
 
 unsigned char msr_sv;
 unsigned char key, st3 = 0;
@@ -885,6 +885,7 @@ asm volatile(
 	set_key_irq();
 
 	key_clear();
+	cls();
 
 #ifdef DEBUG2
 	for(;;)

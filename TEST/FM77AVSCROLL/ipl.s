@@ -24,6 +24,11 @@ top= 0x1600
 __start:
 ;	bra	__start
 
+	lda	#0x3b
+	sta	0x0		; break key cancel
+	ldd	#0x0
+	std	0xfff6
+
 	LDS  #0x7bFF    ; ハードウェアスタックを$7bFFに設定(TWR 0x7C00-)
 	LDU  #0x7b00
 

@@ -65,17 +65,17 @@ unsigned char i, j;
 
 #define VRAM_DATA_ADR (PAGE * 0x1000)
 
-#define sub_vram ((unsigned char *)VRAM_DATA_ADR)
-#define mmr ((unsigned char *)0xFD80)
-#define mem ((unsigned char *)0x6AFF)
-#define mem2 ((unsigned char *)0xfd12)
-#define mem3 ((unsigned char *)0xfd37)
-#define msr ((unsigned char *)0xFD93)
-#define keyport ((unsigned char *)0xFD01)
-#define opncom ((unsigned char *)OPNCOM)
-#define opndat ((unsigned char *)OPNDAT)
+#define sub_vram ((volatile unsigned char *)VRAM_DATA_ADR)
+#define mmr ((volatile unsigned char *)0xFD80)
+#define mem ((volatile unsigned char *)0x6AFF)
+#define mem2 ((volatile unsigned char *)0xfd12)
+#define mem3 ((volatile unsigned char *)0xfd37)
+#define msr ((volatile unsigned char *)0xFD93)
+#define keyport ((volatile unsigned char *)0xFD01)
+#define opncom ((volatile unsigned char *)OPNCOM)
+#define opndat ((volatile unsigned char *)OPNDAT)
 
-#define subinter ((unsigned char *)0xFD04)
+#define subinter ((volatile unsigned char *)0xFD04)
 
 unsigned char msr_sv;
 unsigned char key, st3 = 0;
@@ -1313,6 +1313,7 @@ asm volatile(
 	set_key_irq();
 
 	key_clear();
+	cls();
 
 #ifdef DEBUG2
 	for(;;)
