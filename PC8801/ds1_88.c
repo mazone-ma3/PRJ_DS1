@@ -741,6 +741,9 @@ int main(void)
 		set_mapchr(&font_grp[pat_tmp * 3], &font_data[i * PARTS_X * PARTS_Y * 3]);
 	}
 */
+	if(!basic_mode){
+		pal_all(0, org_pal);
+	}
 
 	st = pd = 255;
 	outp(0x51,0x80);	/* Cursor Off */
