@@ -821,7 +821,7 @@ void cls(void) {
 			put_chr8(i, j, ' ', 0);*/
 //	return;
 
-	sub_disable();
+	sub_disable2();
 asm volatile(
 	"LDA	#0x02	; CLSコマンド ($02)\n"
 	"STA	0xFC82	; コマンド設定エリア\n"
