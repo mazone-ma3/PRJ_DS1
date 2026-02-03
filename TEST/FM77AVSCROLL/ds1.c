@@ -273,9 +273,9 @@ asm volatile(
 }
 
 
-void sub_disable(void)
+void sub_disable1(void)
 {
-asm volatile(
+asm(
 "_SUBHLT:\n"
 	"lda	0xFD05\n"
 	"bmi	_SUBHLT\n"
@@ -286,12 +286,43 @@ asm volatile(
 	"lda	0xFD05\n"
 	"bpl	_LOOP\n" // *-3\n"
 );
+}
+
+void sub_disable(void)
+{
+	sub_disable1();
 
 //	msr_sv = *msr;
-asm volatile(
+asm(
 	"lda	0xfd93\n"
-	";sta	_msr_sv\n"
+	"sta	_msr_sv\n"
 	"ora	#0x80\n"
+	"sta	0xfd93\n"
+);
+//	*msr |= 0x80;
+}
+
+void sub_disable2(void)
+{
+	sub_disable1();
+
+/*asm(
+"_SUBHLT:\n"
+	"lda	0xFD05\n"
+	"bmi	_SUBHLT\n"
+	"orcc	#(0x50)\n"
+	"lda	#0x80\n"
+	"sta	0xFD05\n"
+"_LOOP:\n"
+	"lda	0xFD05\n"
+	"bpl	_LOOP\n" // *-3\n"
+);*/
+
+//	msr_sv = *msr;
+asm(
+	"lda	0xfd93\n"
+	"sta	_msr_sv\n"
+	"anda	#0x7f\n"
 	"sta	0xfd93\n"
 );
 //	*msr |= 0x80;
@@ -863,7 +894,7 @@ void key_clear(void)
 	}
 }
 
-unsigned char timer;
+//unsigned char timer;
 
 /*パレット・セット*/
 void pal_set(unsigned char pal_no, unsigned short color, unsigned char red, unsigned char green,
@@ -888,7 +919,7 @@ void pal_set(unsigned char pal_no, unsigned short color, unsigned char red, unsi
 	register unsigned short rd asm("d");
 	register unsigned short rx asm("x");
 
-	timer = 13;
+//	timer = 13;
 //	cblue = blue;
 //	cred = red;
 //	cgreen = green;
@@ -904,6 +935,14 @@ asm(
 	"	lda _cblue\n"
 	"	ldb _cred\n"
 );*/
+
+	ry = color;
+
+asm(
+//	"	ldb _cgreen\n"
+
+	"	sty 0xfd30\n"
+);
 	ra = blue;
 	rb = red;
 //	rd = (blue * 256) | red;
@@ -914,12 +953,7 @@ asm(
 );*/
 	rb = green;
 
-	ry = color;
-
 asm(
-//	"	ldb _cgreen\n"
-
-	"	sty 0xfd30\n"
 	"	jsr timing\n"
 	"	stx 0xfd32\n"
 	"	stb 0xfd34\n"
@@ -938,7 +972,7 @@ asm(
 	"	lda 0xfd12\n"
 	"	bita #0x02\n"
 	"	beq tm02\n"
-	"	lda _timer\n"
+	"	lda #13 ;_timer\n"
 "tm03:\n"
 	"	deca\n"
 	"	bne tm03\n"
@@ -1291,8 +1325,18 @@ int main(void)
 	bank1_off();	/* 論理演算を切る */
 	sub_enable();
 
-	cursor_off();
+	sub_disable2();
+asm(
+	"orcc	#0x10\n"
+);
 	pal_all(0, org_pal);
+asm(
+	"andcc	#0xEF\n"
+);
+
+	sub_enable();
+
+	cursor_off();
 
 	/* ジョイスティック設定 */
 asm volatile(
