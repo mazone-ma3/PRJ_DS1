@@ -170,13 +170,14 @@ loop2:
 	out(#0x35),a	; Access MAINRAM
 	in	a,(#0x32);
 	and #0xbf;
-	out(#0x32),a	; NOUSE ALU
 
+;	out(#0x32),a	; NOUSE ALU
+;	in	a,(#0x32)
 
-	LD C,#0x32
-	IN A,(C)
-	AND #0xef
-	OUT (C),A
+	push	af
+	res	4,a
+	out	(#0x32),a
+
 	XOR A
 	LD HL,#0x0f3c8
 loop3:
@@ -184,9 +185,10 @@ loop3:
 	INC HL
 	CP H
 	JR NZ,loop3
-	IN A,(C)
-	OR #0x10
-	OUT (C),A
+
+	pop	af
+	out(#0x32),a
+
 	EI
 __endasm;
 }
