@@ -1195,7 +1195,10 @@ asm volatile(
 	sub_enable();*/
 }
 
-void cls2(void) {
+unsigned char scroll_0, scroll_1;
+
+void cls2(void) 
+{
 
 //	bank1_on();
 
@@ -1210,11 +1213,36 @@ void cls2(void) {
 //		*((unsigned char *)0xd40f)
 //			vram_r_on();
 
-		wait_vsync();
+		scroll_0 = ((ii & 0x3f00) >> 8) & 0x3f;
+		scroll_1 = ii & 0xff;
+
 		sub_disable();
 		bank1_on();
-		sub_vram[0x40f] = ii & 0xff;
-		sub_vram[0x40e] = ((ii & 0x3f00) >> 8) & 0x3f;
+
+//		wait_vsync();
+
+//	while((*submode & 0x01)); /* WAIT VSYNC */
+//	while(!(*submode & 0x01));
+
+asm(
+"sclp1:\n"
+	"lda	0xfd12\n"
+	"anda	#0x01\n"
+	"beq	sclp1\n"
+"sclp2:\n"
+	"lda	0xfd12\n"
+	"anda	#0x01\n"
+	"bne	sclp2\n"
+);
+
+//		sub_vram[0x40e] = scroll_0;
+//		sub_vram[0x40f] = scroll_1;
+asm(
+	"lda	_scroll0\n"
+	"ldb	_scroll1\n"
+	"std	0x40e\n"
+	";sta	0x40f\n"
+);
 		sub_enable();
 
 //		jj = 320/8*200;
