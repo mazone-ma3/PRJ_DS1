@@ -22,7 +22,7 @@
 #define keystrobe ((volatile unsigned char *)0xe000)
 #define keydata ((volatile unsigned char *)0xe001)
 
-#define joydata ((volatile unsigned char *)0xe008)
+#define joyport ((volatile unsigned char *)0xe008)
 
 #define ioport  ((volatile unsigned char *)0xe002)
 
@@ -234,8 +234,99 @@ void cls(void) {
 	}
 }
 
+unsigned char st0 = 0;
+
+unsigned char stickmode = ON;
+char str[10];
+
+//#include "common.h"
+int itoa2(int value, char *str);
+int strcpy2(char *dst, char *src);
+
+unsigned char GetJoy1(int *x_count)
+{
+	unsigned char st;
+
+	if(stickmode == OFF)
+		return 0xff;
+
+//	outportb(0x201, 0);
+	*x_count = 0;
+
+	DI();
+
+	do{
+		st = *joyport;
+	}while(!(st & 0x02));
+	do{
+		st = *joyport;
+	}while((st & 0x02));
+	do{
+		st = *joyport;
+	}while(!(st & 0x02));
+	do{
+		*x_count = *x_count + 1;
+		st = *joyport;
+	}while((st & 0x02));
+
+	EI();
+
+	strcpy(str,"       ");
+	itoa2(*x_count, str);
+//	print_at(0, 0, str);
+
+//	sys_wait(1);
+
+	return st;
+}
+
+unsigned char GetJoy2(int *y_count)
+{
+	unsigned char st;
+
+	if(stickmode == OFF)
+		return 0xff;
+
+	*y_count = 0;
+	DI();
+
+	do{
+		st = *joyport;
+	}while(!(st & 0x04));
+	do{
+		st = *joyport;
+	}while((st & 0x04));
+	do{
+		st = *joyport;
+	}while(!(st & 0x04));
+	do{
+		*y_count = *y_count + 1;
+		st = *joyport;
+	}while((st & 0x04));
+
+//	nop();
+
+	EI();
+//	*x_count = 127 - *x_count;
+//	*y_count = 127 - *y_count;
+
+
+	strcpy(str,"       ");
+	itoa2(*y_count, str);
+//	print_at(0, 1, str);
+
+//	sys_wait(1);
+
+	return st; //*joyport;
+}
+
 unsigned char keycode = 0;
-unsigned char st = 0xff, k2, k1, k3, k6, k7;
+unsigned char k2, k1, k3, k6, k7;
+unsigned char st1,st2;
+//unsigned char
+volatile int x_count_org = 0, y_count_org = 0;
+//unsigned char
+volatile int x_count = 0, y_count = 0;
 
 unsigned char keyscan(void)
 {
@@ -244,6 +335,8 @@ unsigned char keyscan(void)
 //	outp(0x1c00,14);
 //	st = *joydata;
 //	EI();
+	st1 = ~GetJoy1(&x_count);
+	st2 = ~GetJoy2(&y_count);
 
 	*keystrobe = 0x01 | 0x80;
 	k1 = ~(*keydata);
@@ -260,22 +353,22 @@ unsigned char keyscan(void)
 	*keystrobe = 0x07 | 0x80;
 	k7 = ~(*keydata);
 
-	if((k7 & 0x20) || !(st & 0x01)){ /* Å™ */
+	if((k7 & 0x20) || ((y_count > (y_count_org + 10)) && ((y_count > 100)))){ /* Å™ */
 		keycode |= KEY_UP1;
 	}
-	if((k7 & 0x08) || !(st & 0x08)){ /* Å® */
+	if((k7 & 0x08) || ((x_count < (x_count_org - 10)) && ((x_count > 100)) ) ){ /* Å® */
 		keycode |= KEY_RIGHT1;
 	}
-	if((k7 & 0x10) || !(st & 0x02)){ /* Å´ */
+	if((k7 & 0x10) || ((y_count < (y_count_org - 10)) && ((y_count > 100)))){ /* Å´ */
 		keycode |= KEY_DOWN1;
 	}
-	if((k7 & 0x04) || !(st & 0x04)){ /* Å© */
+	if((k7 & 0x04) || ((x_count > (x_count_org + 10)) && ((x_count > 100)))){ /* Å© */
 		keycode |= KEY_LEFT1;
 	}
-	if((k6 & 0x10) || (k1 & 0x40)){ /* Z,SPACE */
+	if((k6 & 0x10) || (k1 & 0x40) || (x_count < 100)){ /* Z,SPACE */
 		keycode |= KEY_A;
 	}
-	if((k2 & 0x01) || !(st & 0x40)){ /* X */
+	if((k2 & 0x01) || (y_count < 100)){ /* X */
 		keycode |= KEY_B;
 	}
 	return keycode;
@@ -295,6 +388,55 @@ int main(void)
 	outp(0xf0,0x01);
 	setpcg(ds1_pcg);
 	cls();
+	int i;
+
+	stickmode = OFF;
+	x_count_org = x_count = 300;
+	y_count_org = y_count = 300;
+	for(i = 0; i < 20000; ++i){
+		if(!(*joyport & 0x02)){
+			if(!(*joyport & 0x04)){
+				stickmode = ON;
+				break;
+			}
+		}
+		stickmode = OFF;
+	}
+	if(stickmode == ON){
+		print_at(0, 0, "JOY ON");
+		GetJoy1(&x_count_org);
+		GetJoy2(&y_count_org);
+	}
+
+/*	for(;;){
+		i = *joyport;
+		if(i & 0x02)
+			print_at(0, 0, "ON ");
+		else if(!(i & 0x02))
+			print_at(0, 0, "OFF");
+
+		if(i & 0x04)
+			print_at(0, 1, "ON ");
+		else if(!(i & 0x04))
+			print_at(0, 1, "OFF");
+
+		if(i & 0x08)
+			print_at(0, 2, "ON ");
+		else if(!(i & 0x08))
+			print_at(0, 2, "OFF");
+
+		if(i & 0x10)
+			print_at(0, 3, "ON ");
+		else if(!(i & 0x10))
+			print_at(0, 3, "OFF");
+	}
+*/
+
+/*	itoa2(x_count_org, str);
+	print_at(10, 0, str);
+	itoa2(y_count_org, str);
+	print_at(10, 1, str);
+*/
 
 /*	do{*/
 #ifdef DEBUG2
