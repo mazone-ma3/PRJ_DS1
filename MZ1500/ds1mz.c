@@ -24,6 +24,7 @@
 
 #define joydata ((volatile unsigned char *)0xe008)
 
+#define ioport  ((volatile unsigned char *)0xe002)
 
 #define ON 1
 #define OFF 0
@@ -74,10 +75,8 @@ void setpcg(unsigned char *data)
 void wait_vsync(void)
 {
 	int i;
-	for(i = 0; i < 200; ++i){
-		while(!((*joydata) & 0x80)); /* WAIT VSYNC */
-		while((*joydata) & 0x80);
-	}
+	while(!((*ioport) & 0x80)); /* WAIT VSYNC */
+	while((*ioport) & 0x80);
 }
 
 void sys_wait(unsigned char wait)
