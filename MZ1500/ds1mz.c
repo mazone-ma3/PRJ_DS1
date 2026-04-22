@@ -385,6 +385,7 @@ void play_sound_effect(void) {
 
 int main(void)
 {
+	outp(0xe3,0);
 	outp(0xf0,0x01);
 	setpcg(ds1_pcg);
 	cls();
