@@ -356,8 +356,8 @@ void pal_set(unsigned char pal_no, unsigned short color, unsigned char red, unsi
 /*‚’¼“¯Šú‘Ò‚¿*/
 void wait_vsync(void)
 {
-	while((inp(0x60) & 0x20));
-	while(!(inp(0x60) & 0x20));
+	while((inp(0xa0) & 0x20));
+	while(!(inp(0xa0) & 0x20));
 }
 
 void sys_wait(unsigned char wait)
