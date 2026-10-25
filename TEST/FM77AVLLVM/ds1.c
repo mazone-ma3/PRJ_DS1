@@ -1,4 +1,4 @@
-/* ds1.c for GCC6809 FM77AV  m@3 */
+/* ds1.c for llvm-mc6809 FM77AV  m@3 */
 /* キャラを出す SUB CPUコマンド版 */
 
 #include "mode.h"
