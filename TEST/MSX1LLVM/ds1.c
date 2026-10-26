@@ -238,28 +238,43 @@ __endasm;*/
 
 void vpoke(unsigned short lowadr, unsigned char data)
 {
-//	return;
-	DI();
+/*	DI();
 	write_vram_adr(0, lowadr);
 	write_vram_data(data);
-	EI();
-/*	DI();
-__asm
-	push	af
-;	ld	a,d
-	call	0x004d
-	pop	af
-__endasm;*/
+	EI();*/
+
+	register unsigned short rhl asm("hl") = lowadr;
+	register unsigned char ra asm("a") = data;
+
+	asm volatile(
+		"call	0x004d\n"
+
+		:	/* 値が返るレジスタ変数 */
+		:"r"(rhl),"r"(ra)	/* 引数として使われる変数 */
+		: 	/* 破壊されるレジスタ */
+	);
 //	EI();
 }
 
 unsigned char vpeek(unsigned short lowadr)
 {
-//	return;
-	DI();
+/*	DI();
 	read_vram_adr(0, lowadr);
-	return read_vram_data();
+	return read_vram_data();*/
 //	EI();
+
+	register unsigned short rhl asm("hl") = lowadr;
+	register unsigned char ra asm("a");
+
+	asm volatile(
+		"call	0x004a\n"
+
+		:"=r"(ra)	/* 値が返るレジスタ変数 */
+		:"r"(rhl)	/* 引数として使われる変数 */
+		: 	/* 破壊されるレジスタ */
+	);
+
+	return ra;
 }
 
 unsigned char *pdata;
