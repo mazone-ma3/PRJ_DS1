@@ -13,9 +13,6 @@ CFLAGS   =  --target=z80 -O1 -c
 
 ASFLAGS  =  -filetype=obj -triple=z80
 
-# リンクオプション（subtypeで切り替え）
-LDFLAGS  = +msx -create-app -lmsxbios
-
 LIBPATH= C:\WINAP\LLVM-Z80-23.1.3-r1-Windows-X64\lib\z80
 
 # 中間ファイル
