@@ -10,6 +10,8 @@
         .short   0x0000         ; TEXT (BASICƒvƒƒOƒ‰ƒ€‚È‚µ)
         .short   0x0000, 0x0000, 0x0000 ; —\–ñ
 
+        .global _start
+
 _start:
 INIT:   di                      ; Š„‚è‚İ‹Ö~
 
