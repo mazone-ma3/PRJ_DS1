@@ -36,7 +36,7 @@ FM77AVSCROLL　縦スクロールテスト
 
 FM77AVLLVM　llvm-mc6809テスト
 
-MSX1LLVM　llvm-z80テスト(作業中)
+MSX1LLVM　llvm-z80テスト
 
 各機種のcommon.hは共通です。外側で固有の処理をしています。
 
