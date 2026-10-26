@@ -37,7 +37,7 @@ enum {
 	"######G#####",
 */
 
-const char levels[MAX_STAGES][12*12] = {
+const char *levels[MAX_STAGES] = {
 	"############"	// 1
 	"#....PB....#"
 	"##SSS.SHS.##"

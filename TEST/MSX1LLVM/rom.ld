@@ -7,26 +7,24 @@ MEMORY
 
 SECTIONS
 {
-    /* 読み取り専用コードや定数は ROM (0x4000?) に配置 */
-    .text : {
-        *(.text)
-        *(.text.*)
-    } > ROM
-
-    .rodata : {
-        *(.rodata)
-        *(.rodata.*)
-    } > ROM
-
-    /* 書き込み可能な変数などは RAM (0xC000?) に配置 */
+    .text : { *(.text) } > ROM
+    
+    /* .data セクションの設定 */
     .data : {
+        __data_start = .;      /* RAM上の開始アドレス */
         *(.data)
-        *(.data.*)
-    } > RAM
+        __data_end = .;        /* RAM上の終了アドレス */
+    } > RAM AT > ROM           /* 実行はRAM、配置（ロード）はROM */
 
+    /* ROM上の .data 初期値データの開始位置を取得するシンボル */
+    __data_load = LOADADDR(.data);
+
+    /* BSSセクション */
     .bss : {
+        __bss_start = .;
         *(.bss)
-        *(.bss.*)
         *(COMMON)
+        __bss_end = .;
     } > RAM
 }
+

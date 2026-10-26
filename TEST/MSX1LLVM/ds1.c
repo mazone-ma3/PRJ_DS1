@@ -148,13 +148,40 @@ asm volatile(
 	"ld ix,0x005f	; CHGMOD(MAINROM)\n"
 	"ld	a,%0\n"
 
-	"call	0x001c	; CALSLT\n"
+	";call	0x001c	; CALSLT\n"
+	"call	0x005f	; CHGMOD(MAINROM)\n"
 
 	"pop	ix\n"
 	"pop	de\n"
 
 	:	/* 値が返るレジスタ変数 */
 	:"r"(rd)	/* 引数として使われる変数 */
+	: "bc", "iy","hl"	/* 破壊されるレジスタ */
+);
+}
+
+static void set_mangled_mode(void)
+{
+asm volatile(
+	"push	de\n"
+	"push	ix\n"
+
+	"ld	a,(0xfcc1)	; exptbl\n"
+	"ld	b,a\n"
+	"ld	c,0\n"
+	"push	bc\n"
+	"pop	iy\n"
+	"ld ix,0x007e	; SETGRP(MAINROM)\n"
+
+	";call	0x001c	; CALSLT\n"
+	"call	0x007e	; SETGRP(MAINROM)\n"
+
+
+	"pop	ix\n"
+	"pop	de\n"
+
+	:	/* 値が返るレジスタ変数 */
+	:	/* 引数として使われる変数 */
 	: "bc", "iy","hl"	/* 破壊されるレジスタ */
 );
 }
@@ -178,6 +205,36 @@ void write_vram_data(unsigned char data)
 }
 
 
+void read_vram_adr(unsigned char highadr, int lowadr)
+{
+/*
+__asm
+	push	de
+__endasm;
+	write_VDP(14, (((highadr  << 2) & 0x0c) | (lowadr >> 14) & 0x03));	// V9968
+__asm
+	pop	de
+	ld	a,(_VDP_writeadr)
+	inc	a
+	ld	c,a
+	out	(c),e
+	ld	a,d
+	and	a,0x3f
+	out	(c),a
+__endasm;*/
+	outp(vdp_writeport[VDP_WRITECONTROL], (lowadr & 0xff));
+	outp(vdp_writeport[VDP_WRITECONTROL], 0x00 | ((lowadr >> 8) & 0x3f));
+}
+
+unsigned char read_vram_data(void)
+{
+/*__asm
+	ld	a,(_VDP_readadr)
+	ld	c,a
+	in	a,(c)
+__endasm;*/
+	return inp(vdp_readport[VDP_READDATA]);
+}
 
 void vpoke(unsigned short lowadr, unsigned char data)
 {
@@ -196,12 +253,13 @@ __endasm;*/
 //	EI();
 }
 
-void msx_color(unsigned char a, unsigned char b, unsigned char c)
+unsigned char vpeek(unsigned short lowadr)
 {
-}
-
-void set_mangled_mode(void)
-{
+//	return;
+	DI();
+	read_vram_adr(0, lowadr);
+	return read_vram_data();
+//	EI();
 }
 
 unsigned char *pdata;
@@ -209,13 +267,14 @@ unsigned char *padr;
 
 void vdp_set_sprite_16(unsigned char chr, const char *data)
 {
+	int i;
 	pdata = (unsigned char *)data;
 	padr = (unsigned char *)0x03800 + chr * 8 * 4;
 //	padr = (unsigned char *)0x0 + chr * 8;
-/*	for(i = 0; i < 32; ++i){
-		VPOKE(0x03800L + chr * 8 + i, data[i]);
+	for(i = 0; i < 32; ++i){
+		vpoke(0x03800L + chr * 8 + i, data[i]);
 	}
-	return;*/
+	return;
 /*__asm
 	ld	hl,(_pdata)
 	ld	de,(_padr)
@@ -224,14 +283,21 @@ void vdp_set_sprite_16(unsigned char chr, const char *data)
 __endasm;*/
 }
 
+#define SPR_BASEADR 0x1b00
+
 void vdp_put_sprite_16(unsigned char plane, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
+	vpoke(SPR_BASEADR + plane * 4 + 0, y-1);
+	vpoke(SPR_BASEADR + plane * 4 + 1 ,x);
+	vpoke(SPR_BASEADR + plane * 4 + 2 ,no);
+	vpoke(SPR_BASEADR + plane * 4 + 3, color);
 }
 
-#define sprite_large 1
+#define sprite_large 2
 
 void vdp_set_sprite_mode(unsigned char mode)
 {
+	write_vdp(1, 0x60 | mode);
 }
 
 void copy_to_vram(char *src, short dst, int size)
@@ -343,37 +409,37 @@ void wait(int j) {
 
 void cls_bios(void)
 {
-//	register unsigned char rd asm("d") = mode;
-
 asm volatile(
-	"push	hl\n"
-	"push	iy\n"
-	"push	ix\n"
+	";push	hl\n"
+	";push	iy\n"
+	";push	ix\n"
 
-	"push	af\n"
-	"push	bc\n"
-	"push	de\n"
+	";push	af\n"
+	";push	bc\n"
+	";push	de\n"
 
-	"ld	a,(0xfcc1)	; exptbl\n"
-	"ld	b,a\n"
-	"ld	c,0\n"
-	"push	bc\n"
-	"pop	iy\n"
-	"ld ix,0x00c3	; CLS(MAINROM)\n"
+	";ld	a,(0xfcc1)	; exptbl\n"
+	";ld	d,a\n"
+	";ld	e,0\n"
+	";push	de\n"
+	";pop	iy\n"
+	";ld ix,0x00c3	; CLS(MAINROM)\n"
 
-	"call	0x001c	; CALSLT\n"
+	";call	0x001c	; CALSLT\n"
 
-	"pop	de\n"
-	"pop	bc\n"
-	"pop	af\n"
+	"call	0x00c3	; CLS(MAINROM)\n"
 
-	"pop	ix\n"
-	"pop	iy\n"
-	"pop	hl\n"
+	";pop	de\n"
+	";pop	bc\n"
+	";pop	af\n"
+
+	";pop	ix\n"
+	";pop	iy\n"
+	";pop	hl\n"
 
 	:	/* 値が返るレジスタ変数 */
 	:	//"r"(rd)	/* 引数として使われる変数 */
-	: "bc", "iy","hl"	/* 破壊されるレジスタ */
+	: "bc", "iy","hl","ix","de"	/* 破壊されるレジスタ */
 );
 
 
@@ -409,15 +475,17 @@ __endasm;*/
 
 void cls(void) {
 	int i,j;
-//	cls_bios();
+
+	wait(2);
+	cls_bios();
 
 	vdp_put_sprite_16(0,0,208,0,0);
 	vdp_put_sprite_16(1,0,208,0,0);
 	vdp_put_sprite_16(2,0,208,0,0);
 
-	for(j = 0; j < 24; j++)
+/*	for(j = 0; j < 24; j++)
 		for(i = 0; i < 32; ++i)
-			put_chr8(i, j, ' ');
+			put_chr8(i, j, ' ');*/
 }
 
 // タイルパターン定義 (8x8)
@@ -582,66 +650,66 @@ __endasm;
 */
 }
 
-unsigned char get_stick1(unsigned char trigno)
+extern unsigned char get_stick1(unsigned char trigno)
 {
-	(void)trigno;
-/*__asm
-;	ld	 hl, #2
-;	add	hl, sp
-	ld	l,a
+	register unsigned char ra asm("a");
+	register unsigned char rd asm("d") = trigno;
 
-	push	ix
+asm volatile(
+	"push	de\n"
+	"push	ix\n"
 
-	ld	a,(#0xfcc1)	; exptbl
-	ld	d,a
-	ld	e,#0
-	push	de
-	pop	iy
-	ld ix,#0x00d5	; GTSTCK(MAINROM)
+	"ld	a,(0xfcc1)	; exptbl\n"
+	"ld	b,a\n"
+	"ld	c,0\n"
+	"push	bc\n"
+	"pop	iy\n"
+	"ld ix,0x00d5	; GTSTCK(MAINROM)\n"
+	"ld	a,%1\n"
 
-;	ld	a, (hl)	; a = mode
-	ld	a,l
+	";call	0x001c	; CALSLT\n"
+	"call	0x00d5	; GTSTCK(MAINROM)\n"
 
-	call	#0x001c	; CALSLT
-;	ld	l,a
-;	ld	h,#0
+	"pop	ix\n"
+	"pop	de\n"
 
-	pop	ix
-	ret
-__endasm;*/
-	return 0;
+	:"=r"(ra)	/* 値が返るレジスタ変数 */
+	:"r"(rd)	/* 引数として使われる変数 */
+	: "bc", "iy","hl"	/* 破壊されるレジスタ */
+);
+
+	return ra;
 }
 
-
-unsigned char get_trigger1(unsigned char trigno)
+extern unsigned char get_trigger1(unsigned char trigno)
 {
-	(void)trigno;
-/*__asm
-;	ld	 hl, #2
-;	add	hl, sp
-	ld	l,a
+	register unsigned char ra asm("a");
+	register unsigned char rd asm("d") = trigno;
 
-	push	ix
+asm volatile(
+	"push	ix\n"
 
-	ld	a,(#0xfcc1)	; exptbl
-	ld	d,a
-	ld	e,#0
-	push	de
-	pop	iy
-	ld ix,#0x00d8	; GTTRIG(MAINROM)
+	"ld	a,(0xfcc1)	; exptbl\n"
+	"ld	b,a\n"
+	"ld	c,0\n"
+	"push	bc\n"
+	"pop	iy\n"
+	"ld ix,0x00d8	; GTTRIG(MAINROM)\n"
 
-;	ld	a, (hl)	; a = mode
-	ld	a,l
+	"ld	a,%1\n"
+	";call	0x001c	; CALSLT\n"
+	"call	0x00d8	; GTTRIG(MAINROM)\n"
 
-	call	#0x001c	; CALSLT
-;	ld	l,a
-;	ld	h,#0
+	"pop	ix\n"
 
-	pop	ix
-	ret
-__endasm;*/
-	return 0;
+	:"=r"(ra)	/* 値が返るレジスタ変数 */
+	:"r"(rd)	/* 引数として使われる変数 */
+	: "bc", "iy"	/* 破壊されるレジスタ */
+);
+
+	return ra;
 }
+
 
 
 
@@ -712,25 +780,32 @@ __asm
 __endasm;
 }
 
+unsigned char forclr_old, bakclr_old, bdrclr_old, clicksw_old;
+#endif
+
 #define forclr ((unsigned char *)0xf3e9)
 #define bakclr ((unsigned char *)0xf3ea)
 #define bdrclr ((unsigned char *)0xf3eb)
 #define clicksw ((unsigned char *)0xf3db)
 #define oldscr ((unsigned char *)0xfcb0)
 
-unsigned char forclr_old, bakclr_old, bdrclr_old, clicksw_old;
-#endif
-
 #define clicksw ((unsigned char *)0xf3db)
+
+void msx_color(unsigned char forc, unsigned char bak, unsigned char bdr)
+{
+	*forclr = forc;
+	*bakclr = bak;
+	*bdrclr = bdr;
+}
 
 int main(void)
 {
-	int i;
+	int i, j;
 	unsigned char vdp_readadr;
 	unsigned char vdp_writeadr;
 
-	vdp_readadr = read_mainrom(6);
-	vdp_writeadr = read_mainrom(7);
+	vdp_readadr =  *((unsigned char *)0x0006);//read_mainrom(6);
+	vdp_writeadr =  *((unsigned char *)0x0007);//read_mainrom(7);
 
 	for(i = 0; i < 4; i++){
 		vdp_readport[i] = vdp_readadr + i;
@@ -746,10 +821,25 @@ int main(void)
 
 	*clicksw = 0;
 	msx_color(15, 1, 1);
-//	set_mode(1);
-//	set_mangled_mode();
 
-	set_screenmode(2);
+	set_screenmode(1);
+	set_mangled_mode();
+//	set_screenmode(2);
+
+	for(i = 0; i < 256*3; ++i){
+//		vpoke(8213 + i, colordata[i]);
+		for(j = 0; j < 8; ++j){
+			vpoke(0x2000 + i*8+j, 0xf0);
+//			vpoke(0x2000 + 2*1024 + i*8*4+j, 0xf0);
+//			vpoke(0x2000 + 4*1024 + i*8*4+j, 0xf0);
+		}
+	}
+
+	for(i = 0; i < 256 * 8; ++i){
+		j = vpeek(i);
+		vpoke(1024*2+i, j);
+		vpoke(1024*4+i, j);
+	}
 
 /*	for(i = 0; i < 256; i++){
 		vpoke(BASE_ADDRESS+i, i % 256);
