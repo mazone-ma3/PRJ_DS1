@@ -94,7 +94,7 @@ asm volatile(
 );
 }*/
 
-void keyscan_on(void)
+__attribute__((noinline)) void keyscan_on(void)
 {
 asm volatile(
 	"jmp	_SCAN\n"
@@ -166,7 +166,7 @@ asm volatile(
 );
 }
 
-void keyrepeat_off(void)
+__attribute__((noinline)) void keyrepeat_off(void)
 {
 asm volatile(
 	"jmp	_repeat2\n"
@@ -231,7 +231,7 @@ void  key_sense(void)
 }
 
 
-void set_key_irq(void)
+__attribute__((noinline)) void set_key_irq(void)
 {
 asm volatile(
 
@@ -286,9 +286,9 @@ asm volatile(
 
 }
 
-void sub_disable1(void)
+__attribute__((noinline)) void sub_disable1(void)
 {
-asm(
+asm volatile(
 "_SUBHLT:\n"
 	"lda	0xFD05\n"
 	"bmi	_SUBHLT\n"
@@ -306,7 +306,7 @@ void sub_disable(void)
 	sub_disable1();
 
 //	msr_sv = *msr;
-asm(
+asm volatile(
 	"lda	0xfd93\n"
 	"sta	msr_sv\n"
 	"ora	#0x80\n"
@@ -319,7 +319,7 @@ void sub_disable2(void)
 {
 	sub_disable1();
 
-/*asm(
+/*asm volatile(
 "_SUBHLT:\n"
 	"lda	0xFD05\n"
 	"bmi	_SUBHLT\n"
@@ -332,7 +332,7 @@ void sub_disable2(void)
 );*/
 
 //	msr_sv = *msr;
-asm(
+asm volatile(
 	"lda	0xfd93\n"
 	"sta	msr_sv\n"
 	"anda	#0x7f\n"
@@ -490,7 +490,7 @@ unsigned char ii, jj;
 
 unsigned char subcpu_flag = 0;
 
-void sub_draw(void)
+__attribute__((noinline)) void sub_draw(void)
 {
 asm volatile(
 	"lda	#0x3f\n"
@@ -579,7 +579,7 @@ asm volatile(
 }
 
 /* メインRAM->VRAM 3プレーン転送(SUB CPU) */
-void put_sub2(char *patadr)
+__attribute__((noinline)) void put_sub2(char *patadr)
 {
 	register unsigned char *rx asm ("x");
 
@@ -629,7 +629,7 @@ asm volatile(
 }
 
 
-void cursor_off(void)
+__attribute__((noinline)) void cursor_off(void)
 {
 asm volatile(
 	"jsr	_SUBHLTC1\n"
@@ -690,7 +690,7 @@ asm volatile(
 );
 }
 
-void get_key(void)
+__attribute__((noinline)) void get_key(void)
 {
 asm volatile(
 	"bra	keyg\n"
@@ -820,7 +820,7 @@ void put_logo(int x, int y)
 
 #define submode (unsigned char *)0xfd12
 
-void wait_vsync(void)
+__attribute__((optnone)) void wait_vsync(void)
 {
 	while((*submode & 0x01)); /* WAIT VSYNC */
 	while(!(*submode & 0x01));
@@ -859,11 +859,11 @@ void play_sound_effect(void) {
 	beep();  // シンプルなビープ音
 }
 
-/*int memcpy(char *dst, char *src, int size)
+/*void memcpy(char *dst, char *src, int size)
 {
 	while(size--)
 		*dst++ = *src++;
-	return 0;
+	return; // 0;
 }*/
 
 unsigned char keycode = 0;

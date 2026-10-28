@@ -1,20 +1,21 @@
 #/* 1. メモリの定義 (MEMORY) */
 MEMORY
 {
-    ROM (rx)  : ORIGIN = 0x8000, LENGTH = 32K  /* 0x8000 ? 0xFFFF をROMとする (Read/Execute) */
-    RAM (rwx) : ORIGIN = 0x300, LENGTH = 30K   /* 0x0000 ? 0x0FFF をRAMとする (Read/Write/Execute) */
+    ROM (rx)  : ORIGIN = 0x8000, LENGTH = 32K  /* 0x8000 - 0xFFFF をROMとする (Read/Execute) */
+    RAM (rwx) : ORIGIN = 0x300, LENGTH = 30K   /* 0x0000 - 0x0FFF をRAMとする (Read/Write/Execute) */
 }
 
 #/* 2. セクションの配置 (SECTIONS) */
 SECTIONS
 {
     /* ROM領域に配置するもの */
+
+    /* RAM領域に配置するもの */
     .text : {
         *(.text)     /* プログラムのコード本体 */
         *(.rodata)   /* 読み取り専用データ（定数文字列など） */
     } > RAM
 
-    /* RAM領域に配置するもの */
     .data : {
         *(.data)     /* 初期値ありのグローバル変数 */
     } > RAM
