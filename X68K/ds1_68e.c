@@ -256,7 +256,7 @@ void end()
 	_iocs_crtmod(0x10);	/* 768x512 16colors 1plane 31kHz */
 }
 
-void paint(unsigned short color)
+__attribute__((noinline)) void paint(unsigned short color)
 {
 /*	unsigned short i, j, k;
 	unsigned long *p0 = (unsigned long *)bvram;
