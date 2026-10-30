@@ -8,35 +8,35 @@ MSX1版は全体のプロトタイプとして作成したので今のところ�
 
 何故かIPL起動実験の続き(実践編)になってます。
 
-・MSX1版/X1版/PC-8801版/MZ-1500版
+・[MSX1版](MSX1)/[X1版](X1)/[PC-8801版](PC8801)/[MZ-1500版](MZ1500)
 
 z88dk(Ver. 2.4で検証)でコンパイルしてください。X1版/PC-8801版は直接.d88を生成するように修正しました。
 
 もしMSX1版が起動しない場合はスロット2に入れてみてください。
 
-・FM77AV版
+・[FM77AV版](FM77AV)
 
 gcc6809(4.3.6 branch)でコンパイルしてください。直接.d77を生成するように修正しました。IPLはinufuto氏のソースを参考にしています。
 
-・PC-9801版
+・[PC-9801版](PC9801)
 
 OpenWatcom(Ver. 2.0で検証)でコンパイルしてください。直接.xdfを生成します。
 
-・FM TOWNS版
+・[FM TOWNS版](TOWNS)
 
 OpenWatcom(Ver. 2.0で検証)でコンパイルしてください。直接.xdfを生成します。IPL版はうんづではキー入力に対応しません。IPLやキー入力はFreeTOWNSOS(CaptainYS氏作)を参考にしています。
 
-・X68000版
+・[X68000版](X68K)
 
 elf2x68kでコンパイルしてください。直接.xdfを生成します。
 
 ・TEST
 
-FM77AVSCROLL　縦スクロールテスト
+[FM77AVSCROLL](TEST/FM77AVSCROLL)　縦スクロールテスト
 
-FM77AVLLVM　llvm-mc6809テスト
+[FM77AVLLVM](TEST/FM77AVLLVM)　llvm-mc6809テスト
 
-MSX1LLVM　llvm-z80テスト
+[MSX1LLVM](TEST/MSX1LLVM)　llvm-z80テスト
 
 各機種のcommon.hは共通です。外側で固有の処理をしています。
 
