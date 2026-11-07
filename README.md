@@ -38,7 +38,7 @@ elf2x68kでコンパイルしてください。直接.xdfを生成します。
 
 [MSX1LLVM](TEST/MSX1LLVM)　llvm-z80テスト
 
-[X68KLLVM](TEST/X68KLLVM)　llvm -m68kテスト 要-m68k対応clang-24 & binutils-m68k-linux-gnu
+[X68KLLVM](TEST/X68KLLVM)　llvm -m68kテスト 要Ubuntuなどの-m68k対応clang-24 & gcc-m68k-linux-gnu & binutils-m68k-linux-gnu
 
 各機種のcommon.hは共通です。外側で固有の処理をしています。
 
