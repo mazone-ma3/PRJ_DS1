@@ -48,14 +48,14 @@ static inline void pokew(short selector, int offset, short val) {
 }
 
 static inline void pokel(uint16_t selector, uint32_t offset, uint32_t val) {
-    __asm__ volatile (
-        "push %%es\n"
-        "movw %1, %%es\n\t"
-        "movl %2, %%es:(%0)\n"
-        "pop %%es\n"
-        : : "r"(offset), "r"(selector), "r"(val)
-        : "memory"
-    );
+	__asm__ volatile (
+		"push %%es\n"
+		"movw %1, %%es\n\t"
+		"movl %2, %%es:(%0)\n"
+		"pop %%es\n"
+		: : "r"(offset), "r"(selector), "r"(val)
+		: "memory"
+	);
 }
 
 //#ifdef DEBUG2
@@ -69,23 +69,23 @@ __asm__ volatile ("outb %0, %1" : : "a"(data), "Nd"(port));
 
 // ポートから1バイト入力
 static inline uint8_t inp(uint16_t port) {
-    uint8_t ret;
-    __asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
-    return ret;
+	uint8_t ret;
+	__asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
+	return ret;
 }
 
 /* --- 2バイト（16ビット）の入出力 --- */
 
 // ポートへ2バイト出力
 static inline void outpw(uint16_t port, uint16_t val) {
-    __asm__ volatile ("outw %0, %1" : : "a"(val), "Nd"(port));
+	__asm__ volatile ("outw %0, %1" : : "a"(val), "Nd"(port));
 }
 
 // ポートから2バイト入力
 static inline uint16_t inpw(uint16_t port) {
-    uint16_t ret;
-    __asm__ volatile ("inw %1, %0" : "=a"(ret) : "Nd"(port));
-    return ret;
+	uint16_t ret;
+	__asm__ volatile ("inw %1, %0" : "=a"(ret) : "Nd"(port));
+	return ret;
 }
 
 //#endif
@@ -626,7 +626,7 @@ __attribute((optnone)) void print_at_2(char x, char y, char *str) {
 
 void put_logo(int x, int y)
 {
-	print_at_2(x, y, "      i  k   ");
+	print_at_2(x, y, "	  i  k   ");
 	print_at_2(x, y+1, " 2026 bcdefgh");
 }
 
@@ -679,9 +679,9 @@ unsigned short PARABLK[PARA_END];
 
 unsigned char matrix[16] = {0x0};
 
-__attribute((optnone)) void KYB_matrix(void)
-{
-#ifndef DEBUG2
+//__attribute((optnone)) void KYB_matrix(void)
+//{
+/*#ifndef DEBUG2
 __asm__ volatile(
 	"mov	%ds,%ax\n"
 	"push	%es\n"
@@ -708,68 +708,107 @@ __asm__ volatile(
 }
 #else
 	int i;
-	_disable();
+	_disable();*/
 /*	for(i = 0; i < 8; i++){
 		str[0] = key_matrix[i] + 0x30;
 		str[1] = '\0';
 		print_at(PRINT_MUL * 24, 12 + i, str);
 	}*/
-	for(i = 0; i < 16; i++){
+/*	for(i = 0; i < 16; i++){
 		matrix[i] = key_matrix[i];
 	}
 	_enable();
 }
 #endif
-
-#ifdef DEBUG
+*/
+//#ifdef DEBUG
 void KYB_matrix(void)
 {
 	PARABLK[PARA_RINT] = 0x90;
 	PARABLK[PARA_EAXDWD] = 0x0a * 256;
 
+	__asm__ volatile(
+		".intel_syntax noprefix\n"
+		
+		"mov	ax, ds\n"
+		"mov	es, ax\n"
+
+		"mov	ax, 0x250f\n"
+		"lea	ebx, [matrix]\n"
+		"mov	ecx, 8\n"
+
+		"cli\n"
+		"int	0x21\n"
+		"sti\n"
+
+		"jc	1f\n"
+
+		"mov	di, cx\n"
+		"rol	ecx, 16\n"		/* ror edx, 16 のような操作（元の ror ecx, 16 に合わせる） */
+		
+		/* DSWDへの格納を安全にオペランド経由で実施 */
+		"mov	[%0], cx\n"
+
+		"mov	ax, 0x2511\n"
+		"lea	edx, [PARABLK]\n"
+		"cli\n"
+		"int	0x21\n"
+		"sti\n"
+
+		"1:\n"				  /* errorラベル */
+		".att_syntax\n"
+		:
+		: "m"(PARABLK[PARA_DSWD])
+		: "eax", "ebx", "ecx", "edx", "edi", "cc", "memory"
+	);
+}
+/*
 __asm__ volatile(
-	mov	ax,ds
-	mov	es,ax
+	"mov	%%ds,%%ax\n"
+	"mov	%%ax,%%es\n"
 
-	mov	ax,0250fh
-	lea	ebx,matrix
-	mov	ecx,8
+	"mov	$0x0250f,%%ax\n"
+	"lea	%1,%%ebx\n"
+	"mov	8,%%ecx\n"
 
-	cli		/* リアルモードは割り込み禁止にしてみている */
-	int	21h
-	sti
+	"cli\n"		// リアルモードは割り込み禁止にしてみている
+	"int	$0x21\n"
+	"sti\n"
 
-	jc	error
+	"jc	error\n"
 
-	mov	di,cx
+	"mov	%%cx,%%di\n"
 
-;	xchg	cl,ch
-	ror	ecx,16
-;	ror	cx
+//;	xchg	cl,ch
+	"ror	$16,%%ecx\n"
+//;	ror	cx
 
-;	mov	DSWD,cx
+//;	mov	DSWD,cx
 
-	mov	PARABLK+PARA_DSWD*2,cx
+	"movw	%%cx,%0\n"
 
-;	mov	ah,0ah; 54h
-;	mov	al,DEVNO
-;	mov	ch,00h
-;	mov	cl,00h
+//;	mov	ah,0ah; 54h
+//;	mov	al,DEVNO
+//;	mov	ch,00h
+//;	mov	cl,00h
 
-;	mov	EAXDWD,eax
-;	mov	bx,90h; 93h
-;	mov	RINT,bx
+//;	mov	EAXDWD,eax
+//;	mov	bx,90h; 93h
+//;	mov	RINT,bx
 
-	mov	ax,2511h
-	lea	edx,PARABLK;RINT
-	cli		/* 同上 */
-	int	21h
-	sti
-error:
-);
-}
-}
-#endif
+	"mov	$0x2511,%%ax\n"
+	"lea	PARABLK,%%edx\n"//;RINT
+	"cli\n"		// 同上
+	"int	$0x21\n"
+	"sti\n"
+"error:\n"
+	:
+	: "r"(&PARABLK+PARA_DSWD*2),"r"(&matrix)
+	: "memory","eax", "ebx", "ecx", "edx", "edi"
+);*/
+//}
+//}
+//#endif
 
 __attribute((optnone)) unsigned char keyscan(void)
 {
