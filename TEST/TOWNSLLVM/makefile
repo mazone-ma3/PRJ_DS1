@@ -17,7 +17,7 @@ AS           = $(BIN)\clang -target i386-elf
 GENEXP       = $(BIN2)\genexp3
 
 # フラグ定義
-CCFLAGS2 =   -O0 -fno-ident -fno-asynchronous-unwind-tables  -IC:\msys64\usr\x86_64-pc-cygwin\include -fno-unwind-tables -fno-addrsig 
+CCFLAGS2 =   -Os -fno-ident -fno-asynchronous-unwind-tables  -IC:\msys64\usr\x86_64-pc-cygwin\include -fno-unwind-tables -fno-addrsig 
 LDFLAGS2 =  -nostdlib -T link.ld
 
 # 中間ファイル

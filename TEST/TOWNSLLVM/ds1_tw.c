@@ -207,7 +207,8 @@ void screen_switch(unsigned short);
 void cursor_switch(unsigned short);
 void v_sync(void);
 
-__attribute((optnone)) void put_8(unsigned short x, unsigned short y, unsigned short no)
+//__attribute((optnone)) 
+void put_8(unsigned short x, unsigned short y, unsigned short no)
 {
 	unsigned short j;
 	unsigned int c;
@@ -247,7 +248,7 @@ __attribute((optnone)) void put_8(unsigned short x, unsigned short y, unsigned s
 	}
 }
 
-__attribute((optnone)) void put_8_font(unsigned short x, unsigned short y, unsigned short no)
+void put_8_font(unsigned short x, unsigned short y, unsigned short no)
 {
 	unsigned short j;
 	unsigned int c;
@@ -431,7 +432,7 @@ __asm__ volatile (
 #endif
 }
 
-void sys_wait(unsigned char wait)
+__attribute((optnone)) void sys_wait(unsigned char wait)
 {
 	unsigned char i;
 	for(i = 0; i < wait; ++i)
@@ -623,7 +624,7 @@ __attribute((optnone)) void print_at_2(char x, char y, char *str) {
 	}
 }
 
-__attribute((optnone)) void put_logo(int x, int y)
+void put_logo(int x, int y)
 {
 	print_at_2(x, y, "      i  k   ");
 	print_at_2(x, y+1, " 2026 bcdefgh");

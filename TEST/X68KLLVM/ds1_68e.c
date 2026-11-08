@@ -22,13 +22,12 @@
 #define B_KEY "X"
 
 #ifdef DEBUG2
-//void  *memcpy(void *dst, const void *src, unsigned int size)
-/*void* memcpy(char *dst, char *src, int size)
+void  *memcpy(void *dst, const void *src, unsigned int size)
 {
 	while(size--)
-		*dst++ = *src++;
+		*((unsigned char *)dst++) = *(unsigned char *)src++;
 	return 0;
-}*/
+}
 
 __attribute((noinline)) void _iocs_g_clr_on(void) {
 	register long rd0 asm ("d0");
@@ -264,27 +263,29 @@ void end()
 	_iocs_crtmod(0x10);	/* 768x512 16colors 1plane 31kHz */
 }
 
-//__attribute__((noinline)) __attribute__((optnone)) 
-void paint(unsigned long color)
+//__attribute((optnone))
+__attribute((noinline))  void paint(unsigned long color)
 {
-	unsigned short i, j, k;
+/*	unsigned short i, j, k;
 	unsigned long *p0 = (unsigned long *)bvram;
 	unsigned long *p1 = (unsigned long *)rvram;
 	unsigned long *p2 = (unsigned long *)gvram;
 	unsigned long *p3 = (unsigned long *)ivram;
-
-/*	register long rd0 asm("d0");
-	register long ra0 asm("a0");
-	register long ra1 asm("a1");
-	register long ra2 asm("a2");
-	register long ra3 asm("a3");
+*/
+	register unsigned long rd0 asm("d0");
+	register unsigned long rd1 asm("d1");
+	register unsigned long ra0 asm("a0");
+	register unsigned long ra1 asm("a1");
+	register unsigned long ra2 asm("a2");
+	register unsigned long ra3 asm("a3");
 
 	rd0 = (unsigned long)color;
 	ra0 = (unsigned long)bvram;
 	ra1 = (unsigned long)rvram;
 	ra2 = (unsigned long)gvram;
 	ra3 = (unsigned long)ivram;
-*/
+	rd1 = 0;
+/*
 	for (i = 0; i < 512; ++i){
 		for (j = 0; j < (0x80 / 4); ++j){
 			k = j + i * (0x80 / 4);
@@ -294,22 +295,20 @@ void paint(unsigned long color)
 			*(p3 + k) = color; // bit;
 		}
 	}
-
-//looppaint:
-/*asm volatile(
-	"move.l	#0,%%d1\n"
-"looppaint:\n"
-	"move.l	%%d0,(%%a0, %%d1)\n"
-	"move.l	%%d0,(%%a1, %%d1)\n"
-	"move.l	%%d0,(%%a2, %%d1)\n"
-	"move.l	%%d0,(%%a3, %%d1)\n"
-	"add.l	#4,%%d1\n"
-	"cmp.l	#0x80*512,%%d1\n"
-	"bne	looppaint\n"
-	:			// 値が返るレジスタ変数
-	:"d"(rd0),"d"(ra0),"d"(ra1),"d"(ra2),"d"(ra3)	// 引数として使われるレジスタ変数 
-	:"d1"		// 破壊されるレジスタ
-);*/
+*/
+__asm__ volatile(
+"1:\n"
+	"move.l	%1,(0, %2, %0.l)\n"
+	"move.l	%1,(0, %3, %0.l)\n"
+	"move.l	%1,(0, %4, %0.l)\n"
+	"move.l	%1,(0, %5, %0.l)\n"
+	"add.l	#4,%0\n"
+	"cmp.l	%6,%0\n"
+	"bne	1b\n"
+	:"+r"(rd1)			// 値が返るレジスタ変数
+	:"r"(rd0),"r"(ra0),"r"(ra1),"r"(ra2),"r"(ra3),"d"(0x80*512)	// 引数として使われるレジスタ変数 
+	:"memory"		// 破壊されるレジスタ
+);
 }
 
 /*テキスト画面及びグラフィック画面の消去*/

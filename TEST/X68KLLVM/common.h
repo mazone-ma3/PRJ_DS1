@@ -300,7 +300,7 @@ void init_status(void)
 	current_stage = 0;
 }
 
-void main2(void) {
+__attribute((optnone)) void main2(void) {
 	define_tiles();
 //	fill_vram(0x01, 32*24);  // 初回クリア（床で埋める）
 start:
@@ -496,7 +496,7 @@ int try_move(int dx, int dy) {
 int nx,ny;
 char below;
 
-void gravity_fall(void) {
+__attribute((optnone)) void gravity_fall(void) {
 	if (gravity_x == -1) return;
 
 	for(;;){
@@ -575,7 +575,7 @@ void update_objects(void) {
 	old_gravity_x = gravity_x; old_gravity_y = gravity_y;
 }
 
-void start_battle(void) {
+__attribute((optnone)) void start_battle(void) {
 	game_mode = MODE_BATTLE;
 	enemy_hp = 10 + (level - 1) * 5;
 	enemy_atk = 3 + ((level - 1) * 3 / 2);
@@ -589,7 +589,7 @@ void start_battle(void) {
 	wait(60);
 }
 
-void damage_battle(void) {
+__attribute((optnone)) void damage_battle(void) {
 	player_hp -= enemy_atk;
 	//sprintf(battle_msg, "You took %d damage! HP:%d", enemy_atk, player_hp);
 	pbattle_msg = battle_msg;
@@ -620,7 +620,7 @@ void damage_battle(void) {
 	}
 }
 
-void update_battle(void) {
+__attribute((optnone)) void update_battle(void) {
 	keycode = keyscan();
 	if (keycode & KEY_A) {
 		enemy_hp -= player_atk;

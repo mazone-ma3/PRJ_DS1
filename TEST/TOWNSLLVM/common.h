@@ -231,7 +231,7 @@ void update_battle(void);
 int quotient = 0;
 int rem = 0;
 
-int divideBy10(int n) {
+__attribute((optnone)) int divideBy10(int n) {
 	quotient = 0;
 	rem = n;
 
@@ -244,14 +244,14 @@ int divideBy10(int n) {
 
 int res;
 
-int get_mod10(int n) {
+__attribute((optnone)) int get_mod10(int n) {
 //	int res;
 	res = n - divideBy10(n) * 10;
 	return (res >= 10) ? res - 10 : res;
 }
 
 
-int itoa2(int value, char *str) {
+__attribute((optnone)) int itoa2(int value, char *str) {
 	char *p = str;
 	int tmp = value;
 	int size = 0;
@@ -270,7 +270,7 @@ int itoa2(int value, char *str) {
 	return size;
 }
 
-unsigned char simple_rnd(void) {
+__attribute((optnone)) unsigned char simple_rnd(void) {
 /*	static unsigned char r = 1;
 	r = r * 37 + 41;  // “K“–‚È’è”
 	return r;*/
@@ -281,7 +281,7 @@ unsigned char simple_rnd(void) {
 
 int size;
 
-int strcpy2(char *dst, char *src)
+__attribute((optnone)) int strcpy2(char *dst, char *src)
 {
 	size = 0;
 	while(*src != '\0'){
@@ -301,7 +301,7 @@ void init_status(void)
 	current_stage = 0;
 }
 
-void main2(void) {
+__attribute((optnone)) void main2(void) {
 
 player_x = -1, player_y = -1;
 gravity_x = -1, gravity_y = -1;
