@@ -18,6 +18,8 @@
 #define A_KEY "Z"
 #define B_KEY "X"
 
+#define MEM_SEGMENT 0x40
+
 int main(void);
 
 void _start(void)
@@ -108,7 +110,7 @@ __asm__ volatile(
 
 static inline  void outpm(int offset, int adr, char data)
 {
-	poke(0x60, offset * 0x10 + adr, data);
+	poke(MEM_SEGMENT, offset * 0x10 + adr, data);
 }
 
 __attribute((optnone)) void put_str(char x, char y, char *str)
@@ -214,6 +216,7 @@ void put_8(unsigned short x, unsigned short y, unsigned short no)
 	unsigned int c;
 	unsigned short *p0 = (unsigned short *)ds1_grp;
 //	unsigned char __far *w;
+	unsigned char a;
 
 	for (j = 0; j < 16; j++){
 		c = x + y * 16 * 80 + j * 80 + 0xc0000;
@@ -227,24 +230,31 @@ void put_8(unsigned short x, unsigned short y, unsigned short no)
 			= 0;
 */
 //		w = MK_FP(0xc000,c);
-		poke(0x60, 0xcff81, 1);
+		_disable();
+		a = inp(0x404) & 0x80;
+		outp(0x404,0);
+
+		poke(MEM_SEGMENT, 0xcff81, 1);
 //		*((unsigned short __far *)(unsigned char __far *)(w))
 //			 = p0[no + j * 16 + 1024*0];
-		pokew(0x60, c, p0[no + j * 16 + 1024*0]);
-		poke(0x60, 0xcff81, 2);
+		pokew(MEM_SEGMENT, c, p0[no + j * 16 + 1024*0]);
+		poke(MEM_SEGMENT, 0xcff81, 2);
 //		*((unsigned short __far *)(unsigned char __far *)(w))
 //			 = p0[no + j * 16 + 1024*1];
-		pokew(0x60, c, p0[no + j * 16 + 1024*1]);
-		poke(0x60, 0xcff81, 4);
+		pokew(MEM_SEGMENT, c, p0[no + j * 16 + 1024*1]);
+		poke(MEM_SEGMENT, 0xcff81, 4);
 //		*((unsigned short __far *)(unsigned char __far *)(w))
 //			 = p0[no + j * 16 + 1024*2];
-		pokew(0x60, c, p0[no + j * 16 + 1024*2]);
-		poke(0x60, 0xcff81, 8);
+		pokew(MEM_SEGMENT, c, p0[no + j * 16 + 1024*2]);
+		poke(MEM_SEGMENT, 0xcff81, 8);
 //		*((unsigned short __far *)(unsigned char __far *)(w))
 //			 = p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2];
-		pokew(0x60, c, p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2]);
+		pokew(MEM_SEGMENT, c, p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2]);
 
 //		poke(0x120, c*4, p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1]*2 | p0[no + j * 16 + 1024*2]*4 | (p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2])*8);
+
+		outp(0x404,a);
+		_enable();
 	}
 }
 
@@ -254,6 +264,7 @@ void put_8_font(unsigned short x, unsigned short y, unsigned short no)
 	unsigned int c;
 	unsigned short *p0 = (unsigned short *)font_grp;
 //	unsigned char __far *w;
+	unsigned char a;
 
 	for (j = 0; j < 16; j++){
 		c = x + y * 16 * 80 + j * 80 + 0xc0000;
@@ -267,22 +278,29 @@ void put_8_font(unsigned short x, unsigned short y, unsigned short no)
 			= 0;
 */
 //		w = MK_FP(0xc000,c);
-		poke(0x60, 0xcff81, 1);
+		_disable();
+		a = inp(0x404) & 0x80;
+		outp(0x404,0);
+
+		poke(MEM_SEGMENT, 0xcff81, 1);
 //		*((unsigned short __far *)(unsigned char __far *)(w))
 //			 = p0[no + j * 16 + 1024*0];
-		pokew(0x60, c, p0[no + j * 16 + 1024*0]);
-		poke(0x60, 0xcff81, 2);
+		pokew(MEM_SEGMENT, c, p0[no + j * 16 + 1024*0]);
+		poke(MEM_SEGMENT, 0xcff81, 2);
 //		*((unsigned short __far *)(unsigned char __far *)(w))
 //			 = p0[no + j * 16 + 1024*1];
-		pokew(0x60, c, p0[no + j * 16 + 1024*1]);
-		poke(0x60, 0xcff81, 4);
+		pokew(MEM_SEGMENT, c, p0[no + j * 16 + 1024*1]);
+		poke(MEM_SEGMENT, 0xcff81, 4);
 //		*((unsigned short __far *)(unsigned char __far *)(w))
 //			 = p0[no + j * 16 + 1024*2];
-		pokew(0x60, c, p0[no + j * 16 + 1024*2]);
-		poke(0x60, 0xcff81, 8);
+		pokew(MEM_SEGMENT, c, p0[no + j * 16 + 1024*2]);
+		poke(MEM_SEGMENT, 0xcff81, 8);
 //		*((unsigned short __far *)(unsigned char __far *)(w))
 //			 = p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2];
-		pokew(0x60, c, p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2]);
+		pokew(MEM_SEGMENT, c, p0[no + j * 16 + 1024*0] | p0[no + j * 16 + 1024*1] | p0[no + j * 16 + 1024*2]);
+
+		outp(0x404,a);
+		_enable();
 	}
 }
 
@@ -306,37 +324,57 @@ void cursor_switch(unsigned short mode)
 
 
 /*テキスト画面及びグラフィック画面の消去*/
-__attribute((noinline)) void clear(unsigned short type)
+__attribute((optnone)) void clear(unsigned short type)
 {
 	unsigned short i;
 //	unsigned short __far *w;
+	unsigned char a;
 
 //	return;
+	unsigned long register reax __asm__("eax");
+	unsigned long register rebx __asm__("ebx");
+//	unsigned long register res __asm__("es") = 0x0;
+
 
 	if(type & 1){
+		_disable();
+		a = inp(0x404) & 0x80;
+		outp(0x404,0);
+
 		outpm(0xc000, 0xff81, 0x0f);
 /*		for (i = 0; i < 80 * 400/2; i++){
 			w = MK_FP(0xc000,i);
 			*w = 0;
 		}*/
-__asm__ volatile(
-	"push	%ax\n"
-	"push	%ebx\n"
-	"push	%es\n"
-	"mov	$0x60,%ax\n"
-	"mov	%ax,%es\n"
-	"mov	$0xc0000,%ebx\n"
-"loopclear:\n"
-	"movw	$0x0, %es:(%ebx)\n"
-//	"mov	word ptr %es:[%bx], 0\n"
-	"add	$2,%ebx\n"
-	"cmp	$80*400+0xc0000,%ebx\n"
-	"jnz	loopclear\n"
+//		rebx = 0xc0000;
+		reax = MEM_SEGMENT;
 
-	"pop	%es\n"
-	"pop	%ebx\n"
-	"pop	%ax\n"
+
+__asm__ volatile(
+//	"push	%0\n"
+//	"push	%ebx\n"
+	"cld\n"
+	"push	%%es\n"
+//	"mov	%0,%ax\n"
+	"mov	%[reax],%%es\n"
+	"mov	%2,%[rebx]\n"
+"1:\n"
+	"movw	$0x0, %%es:(%[rebx])\n"
+//	"mov	word ptr %es:[%bx], 0\n"
+	"add	$2,%[rebx]\n"
+	"cmp	$80*400+0xc0000,%[rebx]\n"
+	"jnz	1b\n"
+
+	"pop	%%es\n"
+//	"pop	%ebx\n"
+//	"pop	%0\n"
+	:	[rebx]"+r"(rebx)//,"+r"(res)
+	:	[reax]"r"(reax),"i"(0xc0000)
+	:	"memory"
 );
+
+		outp(0x404,a);
+		_enable();
 	}
 #ifndef DEBUG2
 //	if(type & 2)
@@ -371,13 +409,13 @@ __attribute((optnone)) void pal_set(unsigned char pal_no, unsigned char color, u
 			red = ((red + 1)*16-1)*(red!=0);
 
 
-			outp(0x448,0x01);
-			outp(0x44a,0x20);	/* priority register */
+//			outp(0x448,0x01);
+//			outp(0x44a,0x20);	/* priority register */
 
-			outp( 0x0fd90, color);
-			outp( 0x0fd92, blue);
-			outp( 0x0fd94, red);
-			outp( 0x0fd96, green);
+//			outp( 0x0fd90, color);
+//			outp( 0x0fd92, blue);
+//			outp( 0x0fd94, red);
+//			outp( 0x0fd96, green);
 
 
 			outp(0x448,0x01);
@@ -854,7 +892,7 @@ __attribute((optnone)) unsigned char keyscan(void)
 	return keycode;
 }
 
-
+/*
 static uint32_t color_table[16] = {
 	0x0ffffffffUL,
 	0x0eeeeeeeeUL,
@@ -884,15 +922,15 @@ void test(void)
 //			a = peekl(0x120, i);
 		}
 	}
-/*
-__asm{
-	mov	ax,0b000h
-	mov	es,ax
-	cli
-	hlt
+
+//__asm{
+//	mov	ax,0b000h
+//	mov	es,ax
+//	cli
+//	hlt
+//}
 }
 */
-}
 
 #include "common.h"
 
@@ -909,10 +947,13 @@ int main(void)
 //void main_c(void)
 //#endif
 {
+	unsigned char a;
 
 #ifdef DEBUG2
 //	set_int41();
 #endif
+
+//	_disable();
 
 	__asm__ volatile(
 		".intel_syntax noprefix\n"
@@ -927,12 +968,12 @@ int main(void)
 		"call	fword ptr fs:[0x20]\n"
 
 		"mov	ah,1\n"
-		"mov	al,0\n"
+		"mov	al,1\n"
 		"mov	dx,1\n"
 		"call	fword ptr fs:[0x20]\n"
 
 		"mov	ah,1\n"
-		"mov	al,1\n"
+		"mov	al,0\n"
 		"mov	dx,1\n"
 		"call	fword ptr fs:[0x20]\n"
 
@@ -941,6 +982,12 @@ int main(void)
 		"mov	dx,640\n"
 		"mov	bx,400\n"
 		"call	fword ptr fs:[0x20]\n"
+
+		"mov	ah,6\n"
+		"mov	al,0\n"
+		"mov	edx,0x03\n"
+		"call	fword ptr fs:[0x20]\n"
+
 		"pop	fs\n"
 		".att_syntax\n"
 		:
@@ -951,10 +998,28 @@ int main(void)
 	pal_all(0, (unsigned char (*)[3])org_pal);
 //	set_constrast(0, org_pal, 0);
 
+
 	outp(0x448,0);
 	outp(0x44a,0x11);	// layer 0 DISPLAY ON, layer 1 DISPLAY OFF
 
+	outp(0x448,1);
+	outp(0x44a,0x00);
+	outp(0x0fda0,0x08);
+
+//	for(int i = 0; i < 8; ++i)
+//		outp(0xfd98+i, i);
+	_disable();
+	a = inp(0x404) & 0x80;
+	outp(0x404,0);
+	outpm(0xc000, 0xff83, 0);
 	outpm(0xc000, 0xff82, 0x67); // All Plane Display
+	outp(0x404,a);
+	_enable();
+
+
+//	test();
+
+//	_enable();
 
 //	cls();
 
@@ -962,6 +1027,8 @@ int main(void)
 	do{
 #endif
 		main2();
+
+	_enable();
 
 #ifdef DEBUG2
 	}while(1);
