@@ -372,7 +372,7 @@ __attribute((optnone)) void pal_set(unsigned char pal_no, unsigned char color, u
 
 
 			outp(0x448,0x01);
-			outp(0x44a,0x21);	/* priority register */
+			outp(0x44a,0x20);	/* priority register */
 
 			outp( 0x0fd90, color);
 			outp( 0x0fd92, blue);
@@ -381,7 +381,7 @@ __attribute((optnone)) void pal_set(unsigned char pal_no, unsigned char color, u
 
 
 			outp(0x448,0x01);
-			outp(0x44a,0x01);	/* priority register */
+			outp(0x44a,0x00);	/* priority register */
 
 
 			outp( 0x0fd90, color);
@@ -899,6 +899,11 @@ __asm{
 /*メインルーチン
 　初期設定とメインループ*/
 //#ifndef DEBUG2
+
+#define EgbWorkSize 1536
+
+unsigned char EgbWork[EgbWorkSize];
+
 int main(void)
 //#else
 //void main_c(void)
@@ -908,6 +913,40 @@ int main(void)
 #ifdef DEBUG2
 //	set_int41();
 #endif
+
+	__asm__ volatile(
+		".intel_syntax noprefix\n"
+		"push	fs\n"
+		"push	0x110\n"
+		"pop	fs\n"
+
+		"mov	ecx,1536\n"//EgbWorkSize
+		"lea	edi, [EgbWork]\n"
+//		"mov	edi,offset EgbWork\n"
+		"mov	ah,0\n"
+		"call	fword ptr fs:[0x20]\n"
+
+		"mov	ah,1\n"
+		"mov	al,0\n"
+		"mov	dx,1\n"
+		"call	fword ptr fs:[0x20]\n"
+
+		"mov	ah,1\n"
+		"mov	al,1\n"
+		"mov	dx,1\n"
+		"call	fword ptr fs:[0x20]\n"
+
+		"mov	ah,3\n"
+		"mov	al,4\n"
+		"mov	dx,640\n"
+		"mov	bx,400\n"
+		"call	fword ptr fs:[0x20]\n"
+		"pop	fs\n"
+		".att_syntax\n"
+		:
+		:
+		:"eax", "ebx", "ecx", "edx", "edi", "esi", "memory"
+	);
 
 	pal_all(0, (unsigned char (*)[3])org_pal);
 //	set_constrast(0, org_pal, 0);
