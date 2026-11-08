@@ -626,7 +626,7 @@ __attribute((optnone)) void print_at_2(char x, char y, char *str) {
 
 void put_logo(int x, int y)
 {
-	print_at_2(x, y, "	  i  k   ");
+	print_at_2(x, y, "      i  k   ");
 	print_at_2(x, y+1, " 2026 bcdefgh");
 }
 
