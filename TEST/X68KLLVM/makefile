@@ -10,9 +10,7 @@ AS2         = $(AS)
 LD          = m68k-linux-gnu-gcc
 LD2         = clang-24
 
-BINPATH = /home/user/m68k-xelf/
-
-LD3          = $(BINPATH)/bin/m68k-xelf-gcc
+LD3          = m68k-xelf-gcc
 LD3FLAGS     = -Ttext=0x6800 -s
 
 # X68000(68000)ターゲット、最適化
@@ -49,7 +47,7 @@ $(TARGET).xdf: crt0.o $(OBJS) boot.bin
 
 # 3. (おまけ) .X対応にする場合(ソースの#define DEBUG2を外す)
 X: $(OBJS)
-	$(LD3) $(LD3FLAGS) -o $(TARGET).X $(OBJS) -L$(BINPATH)/lib -lm
+	$(LD3) $(LD3FLAGS) -o $(TARGET).X $(OBJS) -lm
 
 # --- 依存関係 ---
 $(TARGET).o: $(TARGET).c common.h inkey.h
