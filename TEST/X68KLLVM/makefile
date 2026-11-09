@@ -1,4 +1,5 @@
-﻿# --- 設定 ---
+﻿# DS1 X68000 makefile for Clang/llvm with m68k-linux-gcc
+# --- 設定 ---
 TARGET      = ds1_68e
 CC          = clang-24 -target m68k
 AS          = clang-24 --target=m68k -mcpu=68000 -c
@@ -8,7 +9,7 @@ AS2         = $(AS)
 LD          = m68k-linux-gnu-gcc
 LD2         = clang-24
 
-# X68000(68000)ターゲット、最適化、文字コード変換（SJIS出力）
+# X68000(68000)ターゲット、最適化
 CFLAGS      = -Os -nostdlib -fno-pic -fno-pie  -mcpu=68000 
 
 # 中間ファイル
