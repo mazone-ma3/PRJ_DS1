@@ -1,4 +1,4 @@
-﻿# DS1.EXP makefile for FM TOWNS GCC (GCCクロスコンパイル開発環境)
+﻿# DS1.EXP makefile for Clang/llvm with FM TOWNS GCC (GCCクロスコンパイル開発環境)
 
 # --- 設定 ---
 TARGET       = ds1_tw

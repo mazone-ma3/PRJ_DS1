@@ -1,4 +1,4 @@
-/* ds1_tw.c FM TOWNS OpenWatcom */
+/* ds1_tw.c FM TOWNS Clang/LLVM  By m@3 */
 
 //#include <i86.h>
 

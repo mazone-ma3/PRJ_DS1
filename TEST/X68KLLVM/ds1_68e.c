@@ -1,4 +1,4 @@
-/* ds1_68e.c X68000 elf2x68k By m@3 */
+/* ds1_68e.c X68000 Clang/llvm By m@3 */
 
 #include "mode.h"
 
