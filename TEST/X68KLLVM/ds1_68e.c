@@ -2,7 +2,7 @@
 
 #include "mode.h"
 
-#ifndef DEBUG2
+/*#ifndef DEBUG2
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,7 +12,7 @@
 #include <x68k/iocs.h>
 #include <x68k/dos.h>
 #endif
-
+*/
 #include "inkey.h"
 
 #include "font98.h"
@@ -21,7 +21,7 @@
 #define A_KEY "Z"
 #define B_KEY "X"
 
-#ifdef DEBUG2
+//#ifdef DEBUG2
 void  *memcpy(void *dst, const void *src, unsigned int size)
 {
 	while(size--)
@@ -97,7 +97,7 @@ asm volatile(
 }
 
 #define  exit(value)
-#endif
+//#endif
 
 /************************************************************************/
 /*		BIT操作マクロ定義												*/
@@ -617,11 +617,11 @@ dum:	_iocs_b_super(0);		/* スーパーバイザモード 最適化防止にラベルを付ける */
 	clear(3);
 	end();
 
-#ifndef DEBUG2
+/*#ifndef DEBUG2
 	while(_iocs_b_keysns())
 		_iocs_b_keyinp();
 #endif
-
+*/
 	exit(0);
 
 	return 0;

@@ -1,4 +1,5 @@
 ﻿# DS1 X68000 makefile for Clang/llvm with m68k-linux-gcc
+
 # --- 設定 ---
 TARGET      = ds1_68e
 CC          = clang-24 -target m68k
@@ -8,6 +9,11 @@ AS2         = $(AS)
 
 LD          = m68k-linux-gnu-gcc
 LD2         = clang-24
+
+BINPATH = /home/user/m68k-xelf/
+
+LD3          = $(BINPATH)/bin/m68k-xelf-gcc
+LD3FLAGS     = -Ttext=0x6800 -s
 
 # X68000(68000)ターゲット、最適化
 CFLAGS      = -Os -nostdlib -fno-pic -fno-pie  -mcpu=68000 
@@ -40,6 +46,10 @@ $(TARGET).xdf: crt0.o $(OBJS) boot.bin
 	dd if=/dev/zero of=$(TARGET).xdf bs=1024 count=1232
 	dd if=boot.bin of=$(TARGET).xdf bs=1024 conv=notrunc seek=0
 	dd if=$(TARGET).bin of=$(TARGET).xdf bs=1024 conv=notrunc seek=1
+
+# 3. (おまけ) .X対応にする場合(ソースの#define DEBUG2を外す)
+X: $(OBJS)
+	$(LD3) $(LD3FLAGS) -o $(TARGET).X $(OBJS) -L$(BINPATH)/lib -lm
 
 # --- 依存関係 ---
 $(TARGET).o: $(TARGET).c common.h inkey.h
