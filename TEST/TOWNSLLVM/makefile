@@ -1,4 +1,4 @@
-﻿# DS1.EXP makefile for Clang/llvm with FM TOWNS GCC (GCCクロスコンパイル開発環境)
+﻿# DS1.EXP makefile for Clang/llvm with FM TOWNS GCC (GCCクロスコンパイル開発環境) on Windows
 
 # --- 設定 ---
 TARGET       = ds1_tw
@@ -17,7 +17,8 @@ AS           = $(BIN)\clang -target i386-elf
 GENEXP       = $(BIN2)\genexp3
 
 # フラグ定義
-CCFLAGS2 =   -Os -fno-ident -fno-asynchronous-unwind-tables  -IC:\msys64\usr\x86_64-pc-cygwin\include -fno-unwind-tables -fno-addrsig 
+CCFLAGS2 =   -Os -fno-ident -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-addrsig 
+#  -IC:\msys64\usr\x86_64-pc-cygwin\include
 LDFLAGS2 =  -nostdlib -T link.ld
 
 # 中間ファイル

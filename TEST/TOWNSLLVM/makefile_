@@ -1,0 +1,53 @@
+﻿# DS1.EXP makefile for Clang/llvm with FM TOWNS GCC (GCCクロスコンパイル開発環境) on Linux
+
+# --- 設定 ---
+TARGET       = ds1_tw
+GCCROOT2     = ./
+
+BIN          = 
+
+# ツール定義
+CC = $(BIN)\clang -target i386-elf  -nostdlib
+LD = $(BIN)\clang -target i386-elf
+
+AS           = clang -target i386-elf
+OBJCOPY      = /home/user/binutils2.43.1/bin/objcopy
+GENEXP       = ./genexp3
+
+# フラグ定義
+CCFLAGS2 =   -Os -fno-ident -fno-asynchronous-unwind-tables  -I$(INC_PATH) -fno-unwind-tables -fno-addrsig 
+LDFLAGS2 = -Wl,--build-id=none -static -nostdlib -T link.ld
+
+# 中間ファイル
+OBJS         = $(TARGET).o
+
+CRT0         = $(LIB_PATH)\crt0.o
+
+# --- ルール ---
+
+all: $(TARGET).EXP
+
+# 1. パターンルール（.c -> .o）
+# 中間ファイル .i や .s を自動で処理する流れを定義
+%.o: %.c
+	$(CC) -c $< -o $*.o $(CCFLAGS2)
+#	$(CC) -S $< -o $*.s $(CCFLAGS2)
+
+# 2. パターンルール（.s -> .o）
+%.o: %.s
+	$(AS) -o $@ $<
+
+# 3. リンク（.bin生成）
+$(TARGET).bin: $(OBJS)
+	$(LD)  $(LDFLAGS2)  $(OBJS) -o $(TARGET).elf
+	$(OBJCOPY) --remove-section .comment -I elf32-i386 -O a.out-i386 $(TARGET).elf $(TARGET).bin
+
+# 4. EXPファイル変換
+$(TARGET).EXP: $(TARGET).bin
+	$(GENEXP) $< $@
+
+# --- 依存関係 ---
+$(TARGET).o: $(TARGET).c common.h inkey.h
+
+clean:
+	rm -f *.o *.bin *.EXP

@@ -3,13 +3,20 @@
 //#include <i86.h>
 
 #include "mode.h"
-
+/*
 #ifndef DEBUG2
 #include <stdio.h>
-//#include <conio.h>
+#include <conio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #endif
+*/
+
+//#include <stdint.h>
+
+typedef unsigned short  uint16_t;
+typedef unsigned char   uint8_t;
+typedef unsigned int    uint32_t;
+
 
 #include "inkey.h"
 #include "ds1_98.h"
