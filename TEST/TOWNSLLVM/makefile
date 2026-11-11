@@ -14,6 +14,7 @@ CC = $(BIN)\clang -target i386-elf  -nostdlib
 LD = $(BIN)\clang -target i386-elf
 
 AS           = $(BIN)\clang -target i386-elf
+OBJCOPY      = $(BIN2)\objcopy
 GENEXP       = $(BIN2)\genexp3
 
 # フラグ定義
@@ -41,16 +42,16 @@ all: $(TARGET).EXP
 	$(AS) -o $@ $<
 
 # 3. リンク（.bin生成）
-$(TARGET).bin: $(OBJS)
-	$(LD)  $(LDFLAGS2)  $(OBJS) -o $(TARGET).elf
-	c:\tgcc\bin\objcopy --remove-section .comment -I elf32-i386 -O a.out-i386 $(TARGET).elf $(TARGET).bin
+$(TARGET).out: $(OBJS)
+	$(LD)  $(LDFLAGS2)  $(OBJS) -o $(TARGET).bin
+	$(OBJCOPY) -I elf32-i386 -O a.out-i386 $(TARGET).bin $(TARGET).out
 
 # 4. EXPファイル変換
-$(TARGET).EXP: $(TARGET).bin
+$(TARGET).EXP: $(TARGET).out
 	$(GENEXP) $< $@
 
 # --- 依存関係 ---
 $(TARGET).o: $(TARGET).c common.h inkey.h
 
 clean:
-	rm -f *.o *.bin *.EXP
+	rm -f *.o *.bin *.out *.EXP

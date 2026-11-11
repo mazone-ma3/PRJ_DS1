@@ -60,4 +60,4 @@ boot.bin : boot_sector.s
 	$(LD) -T binary.ld boot_sector.o -o boot.bin -nostdlib
 
 clean:
-	rm -f $(TARGET).o $(TARGET).X crt0.o boot.bin
+	rm -f *.X *.o *.bin *.xdf
