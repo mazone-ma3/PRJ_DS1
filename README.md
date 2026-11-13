@@ -30,6 +30,10 @@ OpenWatcom(Ver. 2.0で検証)でコンパイルしてください。直接.xdf�
 
 elf2x68kでコンパイルしてください。直接.xdfを生成します。
 
+・[C64版](C64)
+
+llvm-cmosでコンパイルしてください。IMJKで上下左右。
+
 ・TEST 各種実験版
 
 [FM77AVSCROLL](TEST/FM77AVSCROLL)　縦スクロールテスト
