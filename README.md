@@ -42,7 +42,7 @@ elf2x68kでコンパイルしてください。直接.xdfを生成します。
 
 [TOWNSLLVM](TEST/TOWNSLLVM) llvmとTOWNS-gcc クロスコンパイル環境で作成してRUN386で実行するテスト/試作の試作
 
-[C64LLVM](TEST/C64LLVM) C64版テスト llvm-cmosでコンパイルしてください。IMJKで上下左右。
+[C64LLVM](TEST/C64LLVM) llvm-cmosテスト(C64版) IMJKで上下左右。
 
 各機種のcommon.hは共通です。外側で固有の処理をしています。
 
