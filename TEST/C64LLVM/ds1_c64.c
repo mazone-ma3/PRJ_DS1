@@ -505,9 +505,9 @@ unsigned char keyscan(void)
 			if(!BITTST(4, *portb)){	/* ' ' */
 				keycode |= KEY_A;
 			}
-			if(!BITTST(1, *portb)){	/* <- */
-				keycode |= KEY_B;
-			}
+//			if(!BITTST(1, *portb)){	/* <- */
+//				keycode |= KEY_B;
+//			}
 			if(!BITTST(7, *portb)){	/* STOP */
 				keycode |= KEY_B;
 			}
