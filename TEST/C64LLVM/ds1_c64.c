@@ -597,14 +597,17 @@ void put_chr16(unsigned char x, unsigned char y, char chr)
 	switch(chr){
 		case TILE_PLAYER:
 			set_sprite_mychr(x*16+16, y*16+16);
+			put_sprite_all();
 			break;
 
 		case TILE_SLIME:
 			set_sprite_slimechr(x*16+16, y*16+16);
+			put_sprite_all();
 			break;
 
 		case TILE_GRAVITY:
 			set_sprite_blockchr(x*16+16, y*16+16);
+			put_sprite_all();
 			break;
 
 		case TILE_WALL:
@@ -630,7 +633,6 @@ void put_chr16(unsigned char x, unsigned char y, char chr)
 			put_chr8(x*2+1, y*2+1, ' ');
 			break;
 	}
-	put_sprite_all();
 }
 
 void cls(void) {
