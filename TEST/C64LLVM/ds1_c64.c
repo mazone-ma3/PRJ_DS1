@@ -635,6 +635,64 @@ void put_chr16(unsigned char x, unsigned char y, char chr)
 	}
 }
 
+void vsync(void)
+{
+	while(*RASTER == 249);
+	while(*RASTER != 249);
+}
+
+
+void cls2(void) {
+/*	for(;;){
+		screenarea0[i] = screenarea1[i] = screenarea2[i] = screenarea3[i] = 0x20;
+
+		foregroundarea0[i] = foregroundarea1[i] = foregroundarea2[i] = foregroundarea3[i] = 0x01;
+		++i;
+		if(i == 0)
+			break;
+	}*/
+
+	vsync();
+
+__asm__ volatile(
+	"lda	#0x20\n"
+	"ldy	#0x00\n"
+"1:\n"
+	"sta	%0,y\n"
+	"sta	%1,y\n"
+	"sta	%2,y\n"
+	"iny\n"
+	"bne	1b\n"
+
+	"lda	#0x00\n"
+"2:\n"
+	"sta	%4,y\n"
+	"sta	%5,y\n"
+	"sta	%6,y\n"
+	"iny\n"
+	"bne	2b\n"
+
+	"lda	#0x20\n"
+	"ldy	#0xe8\n"
+"4:\n"
+	"sta	%3,y\n"
+	"dey\n"
+	"bne	4b\n"
+
+	"lda	#0x00\n"
+
+	"ldy	#0xe8\n"
+"3:\n"
+	"sta	%7,y\n"
+	"dey\n"
+	"bne	3b\n"
+
+	:
+	:"i"(BGRAM),"i"(BGRAM+0x100),"i"(BGRAM+0x200),"i"(BGRAM+0x300-1),"i"(CRAM),"i"(CRAM+0x100),"i"(CRAM+0x200),"i"(CRAM+0x300-1)
+	:"memory"
+);
+}
+
 void cls(void) {
 	int i,j;
 
@@ -642,10 +700,11 @@ void cls(void) {
 	set_sprite_blockchr(0, 0);
 	set_sprite_slimechr(0, 0);
 	put_sprite_all();
+	cls2();
 
-	for(j = 0l; j < 24; j++)
-		for(i = 0; i < 40; ++i)
-			put_chr8(i, j, ' ');
+//	for(j = 0l; j < 24; j++)
+//		for(i = 0; i < 40; ++i)
+//			put_chr8(i, j, ' ');
 }
 
 void put_logo(int x, int y)
@@ -655,12 +714,6 @@ void put_logo(int x, int y)
 
 void define_tiles(void)
 {
-}
-
-void vsync(void)
-{
-	while(*RASTER == 249);
-	while(*RASTER != 249);
 }
 
 void wait(int j) {
@@ -728,14 +781,7 @@ int main(void)
 	*EXTBGCOOLR1 = COLOR_WHITE;
 	*EXTBGCOOLR2 = COLOR_LIGHT_RED;
 
-	for(;;){
-		screenarea0[i] = screenarea1[i] = screenarea2[i] = screenarea3[i] = 0x20;
-
-		foregroundarea0[i] = foregroundarea1[i] = foregroundarea2[i] = foregroundarea3[i] = 0x01;
-		++i;
-		if(i == 0)
-			break;
-	}
+	cls2();
 
 
 	// Set SPRITE Data
