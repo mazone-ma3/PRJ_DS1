@@ -1,4 +1,4 @@
-/* plustaker64.c By m@3 with Grok */
+/* ds1_c64.c By m@3 with Grok and Gemini 2026 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,21 +12,14 @@
 #define B_KEY "X"
 
 enum {
-	TILE_WALL = 0x00,   // 壁
-	TILE_FLOOR = 0x04,   // 床
-	TILE_PLAYER = 0x08,   // プレイヤー
-	TILE_NORMAL = 0x0c,   // 通常パネル（S） - シンプルブロック
-	TILE_GRAVITY = 0x10,   // 重力パネル（B） - 下向き矢印付き
-	TILE_GOAL = 0x14,   // ゴール
-	TILE_HOLLOW = 0x18,  // 格子状の壁
-
-	TILE_SLIME = 0x1c,   // スライム
-	TILE_MILE = 0x20,
-	TILE_OLDMAN = 0x24,
-	TILE_BAT = 0x28,
-	TILE_STONE = 0x2c,
-	TILE_MUMMY = 0x30,
-	TILE_ARMOR = 0x34
+	TILE_WALL,   // 壁
+	TILE_FLOOR,   // 床
+	TILE_PLAYER,   // プレイヤー
+	TILE_NORMAL,   // 通常パネル（S） - シンプルブロック
+	TILE_GRAVITY,   // 重力パネル（B） - 下向き矢印付き
+	TILE_GOAL,   // ゴール
+	TILE_HOLLOW,  // 格子状の壁
+	TILE_SLIME   // スライム
 };
 
 /************************************************************************/
