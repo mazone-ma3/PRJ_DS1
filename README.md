@@ -30,10 +30,6 @@ OpenWatcom(Ver. 2.0で検証)でコンパイルしてください。直接.xdf�
 
 elf2x68kでコンパイルしてください。直接.xdfを生成します。
 
-・[C64版](C64)
-
-llvm-cmosでコンパイルしてください。IMJKで上下左右。
-
 ・TEST 各種実験版
 
 [FM77AVSCROLL](TEST/FM77AVSCROLL)　縦スクロールテスト
@@ -45,6 +41,8 @@ llvm-cmosでコンパイルしてください。IMJKで上下左右。
 [X68KLLVM](TEST/X68KLLVM)　llvm -m68kテスト 要Ubuntuなどの-m68k対応clang-24 & gcc-m68k-linux-gnu & binutils-m68k-linux-gnu
 
 [TOWNSLLVM](TEST/TOWNSLLVM) llvmとTOWNS-gcc クロスコンパイル環境で作成してRUN386で実行するテスト/試作の試作
+
+[C64LLVM](TEST/C64LLVM) C64版テスト llvm-cmosでコンパイルしてください。IMJKで上下左右。
 
 各機種のcommon.hは共通です。外側で固有の処理をしています。
 
