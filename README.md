@@ -40,11 +40,11 @@ elf2x68kでコンパイルしてください。直接.xdfを生成します。
 
 [X68KLLVM](TEST/X68KLLVM)　llvm -m68kテスト 要Ubuntuなどの-m68k対応clang-24 & gcc-m68k-linux-gnu & binutils-m68k-linux-gnu
 
-[TOWNSLLVM](TEST/TOWNSLLVM) llvmとTOWNS-gcc クロスコンパイル環境で作成してRUN386で実行するテスト/試作の試作
+[TOWNSLLVM](TEST/TOWNSLLVM)　llvmとTOWNS-gcc クロスコンパイル環境で作成してRUN386で実行するテスト/試作の試作
 
-[C64LLVM](TEST/C64LLVM) llvm-cmosテスト(C64版) IMJKで上下左右。
+[C64LLVM](TEST/C64LLVM)　llvm-cmosテスト(C64版) IMJKで上下左右。
 
-[AMIGAGCC](TEST/AMIGAGCC) amigaos-gccテスト　直接.adfファイルを生成します。(要gadf.exe)
+[AMIGAGCC](TEST/AMIGAGCC)　amigaos-gccテスト　直接.adfファイルを生成します。(要gadf.exe)
 
 各機種のcommon.hは共通です。外側で固有の処理をしています。
 
