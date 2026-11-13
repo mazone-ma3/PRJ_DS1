@@ -1,1 +1,0 @@
-mos-c64-clang -Os -o %1.prg %1.c
