@@ -44,6 +44,8 @@ elf2x68kでコンパイルしてください。直接.xdfを生成します。
 
 [C64LLVM](TEST/C64LLVM) llvm-cmosテスト(C64版) IMJKで上下左右。
 
+[AMIGAGCC](TEST/AMIGAGCC) amigaos-gccテスト　直接.adfファイルを生成します。(要gadf.exe)
+
 各機種のcommon.hは共通です。外側で固有の処理をしています。
 
 各機種には互換ROMやWebエミュレーターが出ていますのでそちらで試せます(場所は探してください)。実機での動作は未保証です。
