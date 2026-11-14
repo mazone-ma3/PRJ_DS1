@@ -14,7 +14,8 @@ RESOURCES   = ds1_8bit.sc5 FONTYOKO.SC5
 # se1.raw
 
 # 中間ファイル
-OBJS        = $(TARGET).o muldiv.o
+OBJS        = $(TARGET).o
+# muldiv.o
 
 # --- ルール ---
 
@@ -36,7 +37,7 @@ $(TARGET): $(OBJS)
 
 # --- 依存関係 ---
 $(TARGET).o: $(TARGET).c
-muldiv.o: muldiv.s
+#muldiv.o: muldiv.s
 
 clean:
 	rm -f $(OBJS) $(TARGET) $(TARGET).map

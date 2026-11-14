@@ -1,4 +1,5 @@
 /* ds1_amg.c By m@3 with Grok and Gemini 2026. */
+/* インターリブ版 */
 
 #define SCREEN_WIDTH (320)
 #define SCREEN_HEIGHT (200)
@@ -22,6 +23,7 @@
 
 #include <clib/graphics_protos.h>
 
+#include <graphics/gfxmacros.h>
 
 #include "mode.h"
 #include "inkey.h"
@@ -41,9 +43,6 @@ enum {
 	TILE_HOLLOW,  // 格子状の壁
 	TILE_SLIME   // スライム
 };
-
-extern int my_mod(int a, int b) __attribute__((regparm(2)));
-extern int my_div(int a, int b) __attribute__((regparm(2)));
 
 /************************************************************************/
 /*		BIT操作マクロ定義												*/
@@ -301,6 +300,156 @@ unsigned char conv_tbl[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 
 
 short sc5_load(char *loadfil, short x, short y, short msxline, ULONG bitplane_address, ULONG bitplane_size)
 {
+	long i, j, count2;
+	int k = 0, l = 0, m = 0;
+
+	unsigned short amgcolor[4];
+	unsigned char msxcolor[8];
+	unsigned char color;
+	ULONG vram_adr;
+
+	// 1行あたりのバイト数（320 / 8 = 40バイト）
+	int row_bytes = SCREEN_WIDTH / 8;
+
+	if (!(stream[0] = Open(loadfil, MODE_READWRITE))) {
+		Close(stream[0]);
+		return 1;
+	}
+	Read(stream[0], pattern, 1);	/* MSX先頭読み捨てる */
+	Read(stream[0], pattern, 4);	/* ヘッダ読み捨てる */
+	Read(stream[0], pattern, 2);	/* ヘッダ読み捨てる */
+
+	Read(stream[0], read_pattern, MSXWIDTH * msxline);
+	m = 0;
+	
+	for(count2 = 0; count2 < MSXWIDTH * msxline / 4 / 2; ++count2){
+		
+		/* 色分解 */
+		msxcolor[0] = (read_pattern[m] >> 4) & 0x0f;
+		msxcolor[1] = read_pattern[m++] & 0x0f;
+		msxcolor[2] = (read_pattern[m] >> 4) & 0x0f;
+		msxcolor[3] = read_pattern[m++] & 0x0f;
+		msxcolor[4] = (read_pattern[m] >> 4) & 0x0f;
+		msxcolor[5] = read_pattern[m++] & 0x0f;
+		msxcolor[6] = (read_pattern[m] >> 4) & 0x0f;
+		msxcolor[7] = read_pattern[m++] & 0x0f;
+
+		for(i = 0; i < 4; ++i){
+			amgcolor[i] = 0;
+		}
+		for(j = 0; j < 8; ++j){
+			for(i = 0; i < 4; ++i){
+				color = conv_tbl[msxcolor[j]];
+				if(BITTST(i, color)){
+					BITSET2(7-j, amgcolor[i]);
+				}else{
+					BITCLR2(7-j, amgcolor[i]);
+				}
+			}
+		}
+
+		// ★ラインインターリーブ用の正確なVRAMアドレス計算
+		// l: 縦のラインオフセット（行が進むごとに SCREEN_WIDTH/8 ずつ増える）
+		// その行における 4面分の160バイトブロックの先頭位置を算出
+		ULONG line_block_base = bitplane_address + (l * BITPLANE_NUM) + ((x + y * row_bytes) * BITPLANE_NUM);
+		
+		vram_adr = line_block_base + k;
+
+		// 各プレーンを「40バイト（row_bytes）ずつ離れたストリップ」に書き込む！
+		*((unsigned char *)(vram_adr + row_bytes * 0)) = amgcolor[0]; // プレーン0 (+0)
+		*((unsigned char *)(vram_adr + row_bytes * 1)) = amgcolor[1]; // プレーン1 (+40)
+		*((unsigned char *)(vram_adr + row_bytes * 2)) = amgcolor[2]; // プレーン2 (+80)
+		*((unsigned char *)(vram_adr + row_bytes * 3)) = amgcolor[3]; // プレーン3 (+120)
+
+		k += 1;
+		if(k >= (MSXWIDTH / 8)){
+			k = 0;
+			// 次の行へ進む（1行分の標準幅を進める）
+			l += row_bytes;
+		}
+	}
+	Close(stream[0]);
+
+	return 0;
+}
+
+short sc5_load__(char *loadfil, short x, short y, short msxline, ULONG bitplane_address, ULONG total_size)
+{
+	long i, j, count2;
+	int k = 0, l = 0, m = 0;
+
+	unsigned short amgcolor[4];
+	unsigned char msxcolor[8];
+	unsigned char color;
+	ULONG vram_adr;
+
+	if (!(stream[0] = Open(loadfil, MODE_READWRITE))) {
+		Close(stream[0]);
+		return 1;
+	}
+	Read(stream[0], pattern, 1);	/* MSX先頭読み捨てる */
+	Read(stream[0], pattern, 4);	/* ヘッダ読み捨てる */
+	Read(stream[0], pattern, 2);	/* ヘッダ読み捨てる */
+
+	Read(stream[0], read_pattern, MSXWIDTH * msxline);
+	m = 0;
+	
+	// 1行あたりのプレーン数等を考慮した幅（バイト単位）
+	int row_width_bytes = MSXWIDTH / 8; // 32バイト
+
+	for(count2 = 0; count2 < MSXWIDTH * msxline / 4 / 2; ++count2){
+		
+		/* 色分解（MSXフォーマットから4プレーン分のデータを抽出） */
+		msxcolor[0] = (read_pattern[m] >> 4) & 0x0f;
+		msxcolor[1] = read_pattern[m++] & 0x0f;
+		msxcolor[2] = (read_pattern[m] >> 4) & 0x0f;
+		msxcolor[3] = read_pattern[m++] & 0x0f;
+		msxcolor[4] = (read_pattern[m] >> 4) & 0x0f;
+		msxcolor[5] = read_pattern[m++] & 0x0f;
+		msxcolor[6] = (read_pattern[m] >> 4) & 0x0f;
+		msxcolor[7] = read_pattern[m++] & 0x0f;
+
+		for(i = 0; i < 4; ++i){
+			amgcolor[i] = 0;
+		}
+		for(j = 0; j < 8; ++j){
+			for(i = 0; i < 4; ++i){
+				color = conv_tbl[msxcolor[j]];
+				if(BITTST(i, color)){
+					BITSET2(7-j, amgcolor[i]);
+				}else{
+					BITCLR2(7-j, amgcolor[i]);
+				}
+			}
+		}
+
+		// ★ここがインターブリーフ化のキモ！
+		// プレーンごとに別アドレスに書くのではなく、
+		// 「[P0][P1][P2][P3]` の順にメモリ上で連続して配置する
+		// アドレス計算: 基底アドレス + 行のオフセット(l) + 横位置(k * 4)
+		vram_adr = bitplane_address + l + (k * BITPLANE_NUM);
+
+		// 4プレーン分を連続したバイトとして書き込む
+		*((unsigned char *)(vram_adr + 0)) = (unsigned char)amgcolor[0];
+		*((unsigned char *)(vram_adr + 1)) = (unsigned char)amgcolor[1];
+		*((unsigned char *)(vram_adr + 2)) = (unsigned char)amgcolor[2];
+		*((unsigned char *)(vram_adr + 3)) = (unsigned char)amgcolor[3];
+
+		k += 1;
+		if(k >= row_width_bytes){
+			k = 0;
+			// 1行進むごとに、全プレーン分の幅（32バイト × 4 = 128バイト）を進める
+			l += (row_width_bytes * BITPLANE_NUM);
+		}
+	}
+	Close(stream[0]);
+
+	return 0;
+}
+
+
+short sc5_load_(char *loadfil, short x, short y, short msxline, ULONG bitplane_address, ULONG bitplane_size)
+{
 	long i, j, count, count2;
 	int k=0, l=0, m=0;
 
@@ -369,8 +518,8 @@ short sc5_load(char *loadfil, short x, short y, short msxline, ULONG bitplane_ad
 }
 
 int sprite_pattern_no[8], old_sprite_pattern_no[8], spr_x[8], spr_y[8];
-unsigned char font_buffer[BITPLANE_NUM][8*4][SCREEN_WIDTH / 8];
-unsigned char bg_buffer[BITPLANE_NUM][16*3][SCREEN_WIDTH / 8];
+__chip unsigned char font_buffer[BITPLANE_NUM][8*4][SCREEN_WIDTH / 8];
+__chip unsigned char bg_buffer[BITPLANE_NUM][16*3][SCREEN_WIDTH / 8];
 
 char chr;
 unsigned char str_temp[11];
@@ -381,88 +530,93 @@ APTR base_address;
 APTR sprite_address;
 APTR bitplane_address;
 
-void print_at(int x, int y,  char *str)
-//, unsigned char pal)
-{
-	ULONG vram_adr;
-	int k, l, i;
 
-	x += (32/8);
-	y *= 8;
+void print_at(int x, int y, char *str) {
+	// 1行あたりの全プレーン分のバイト数 (320 / 8 * 4 = 160バイト)
+	int row_bytes = (SCREEN_WIDTH / 8) * BITPLANE_NUM; 
 
-	while(1){
-		chr = *(str++);
-		if(chr == '\0')
+	// 表示位置の調整（4プレーン分のインターブリーフを考慮）
+	x = (x + (32 / 8));
+	y = y * 8 * row_bytes;
+
+	WaitBlit();
+
+	while (1) {
+		char chr = *(str++);
+		if (chr == '\0')
 			break;
 
-		if(chr >= 'a')
-			chr -= ('a'-'A');
+		if (chr >= 'a')
+			chr -= ('a' - 'A');
 
-		if((chr < 0x30))
+		if (chr < 0x30)
 			chr = 0x40;
 
 		chr -= '0';
 
-		k = chr & 0x0f;
-		l = chr / 16 * 8;
+		int k = chr & 0x0f;
+		int l = (chr / 16) * 8 * row_bytes;
 
-		for(int j = 0; j < 8; ++j){
-			vram_adr = (x) + (y + j) * (SCREEN_WIDTH / 8) + (ULONG)bitplane_address;
-			for(i = 0; i < BITPLANE_NUM; ++i){
-				*((unsigned char *)(vram_adr + BITPLANE_SIZE * i)) = 
-					font_buffer[i][l + j][k];
-			}
+		// 8ライン分の文字を描画
+		for (int j = 0; j < 8; ++j) {
+			// インターブリーフVRAMの行アドレスを計算
+			ULONG vram_adr = (ULONG)bitplane_address + y + j * row_bytes + x;
+
+			// 4プレーン分のフォントデータをCPUで順番に書き込む
+			for (int i = 0; i < BITPLANE_NUM; ++i) {
+				// font_buffer もインターブリーフ化されている、またはプレーン別の場合は `font_buffer[i]` から取得
+				*((unsigned char *)(vram_adr + i * (SCREEN_WIDTH / 8) )) =
+					*(&font_buffer[0][0][0] + i * (SCREEN_WIDTH / 8) + k + l + j * row_bytes);
+			  }
 		}
 
-		++x;
+		// 次の文字へ（4プレーン分進む）
+		x++;
 	}
 }
 
-void print_at_2(int x, int y,  char *str)
-//, unsigned char pal)
-{
-	ULONG vram_adr;
-	int k, l, i;
 
-	x += (32/8);
-	y *= 8;
+void print_at_2(int x, int y, char *str) {
+	// 1行あたりの全プレーン分のバイト数 (320 / 8 * 4 = 160バイト)
+	int row_bytes = (SCREEN_WIDTH / 8) * BITPLANE_NUM; 
 
-	while(1){
-		chr = *(str++);
-		if(chr == '\0')
+	// 表示位置の調整（4プレーン分のインターブリーフを考慮）
+	x = (x + (32 / 8));
+	y = y * 8 * row_bytes;
+
+	WaitBlit();
+
+	while (1) {
+		char chr = *(str++);
+		if (chr == '\0')
 			break;
-		if((chr < 0x30))
+
+		if (chr < 0x30)
 			chr = 0x40;
 
 		chr -= '0';
 
-		k = chr & 0x0f;
-		l = chr / 16 * 8;
+		int k = chr & 0x0f;
+		int l = (chr / 16) * 8 * row_bytes;
 
-		for(int j = 0; j < 8; ++j){
-			vram_adr = (x) + (y + j) * (SCREEN_WIDTH / 8) + (ULONG)bitplane_address;
-			for(i = 0; i < BITPLANE_NUM; ++i){
-				*((unsigned char *)(vram_adr + BITPLANE_SIZE * i)) = 
-					font_buffer[i][l + j][k];
-			}
+		// 8ライン分の文字を描画
+		for (int j = 0; j < 8; ++j) {
+			// インターブリーフVRAMの行アドレスを計算
+			ULONG vram_adr = (ULONG)bitplane_address + y + j * row_bytes + x;
+
+			// 4プレーン分のフォントデータをCPUで順番に書き込む
+			for (int i = 0; i < BITPLANE_NUM; ++i) {
+				// font_buffer もインターブリーフ化されている、またはプレーン別の場合は `font_buffer[i]` から取得
+				*((unsigned char *)(vram_adr + i * (SCREEN_WIDTH / 8) )) =
+					*(&font_buffer[0][0][0] + i * (SCREEN_WIDTH / 8) + k + l + j * row_bytes);
+			  }
 		}
 
-		++x;
+		// 次の文字へ（4プレーン分進む）
+		x++;
 	}
 }
 
-void put_numd(int j, unsigned char digit)
-{
-	unsigned char i = digit;
-	int mod = 0;
-
-	while(i--){
-		mod = my_mod(j, 10);
-		str_temp[i] = mod + 0x30;
-		j = my_div(j, 10);
-	}
-	str_temp[digit] = '\0';
-}
 
 // スプライトポインタ設定
 void set_sprite(int num, int posx, int posy) {
@@ -521,13 +675,24 @@ void set_sprite_pattern(int num, int no) {
 
 void set_copperl(ULONG bitplane_address, ULONG sprite_address)
 {
-	for(int i = 0 ; i < BITPLANE_NUM; ++i){
-		COPPERL[(BITPLANE1 + i) * 4 + 1] = ((bitplane_address >> 16) & 0xffff); //0x0002;
-		COPPERL[(BITPLANE1 + i) * 4 + 3] = (bitplane_address & 0xffff) + BITPLANE_SIZE * i;
-	}
+	ULONG row_bytes = SCREEN_WIDTH / 8; // 1行あたりのバイト数 (320 / 8 = 40バイト)
 
+	// インターブリーフ用：各プレーンの開始位置は「1行分（40バイト）」ずつズレる
+	COPPERL[(BITPLANE1 + 0) * 4 + 1] = ((bitplane_address >> 16) & 0xffff);
+	COPPERL[(BITPLANE1 + 0) * 4 + 3] = (bitplane_address & 0xffff);
+
+	COPPERL[(BITPLANE1 + 1) * 4 + 1] = (((bitplane_address + row_bytes) >> 16) & 0xffff);
+	COPPERL[(BITPLANE1 + 1) * 4 + 3] = ((bitplane_address + row_bytes) & 0xffff);
+
+	COPPERL[(BITPLANE1 + 2) * 4 + 1] = (((bitplane_address + row_bytes * 2) >> 16) & 0xffff);
+	COPPERL[(BITPLANE1 + 2) * 4 + 3] = ((bitplane_address + row_bytes * 2) & 0xffff);
+
+	COPPERL[(BITPLANE1 + 3) * 4 + 1] = (((bitplane_address + row_bytes * 3) >> 16) & 0xffff);
+	COPPERL[(BITPLANE1 + 3) * 4 + 3] = ((bitplane_address + row_bytes * 3) & 0xffff);
+
+	// スプライトのポインタ設定（ここは従来通り）
 	for(int i = 0 ; i < SPRITE_NUM; ++i){
-		COPPERL[(SPR0 + i) * 4 + 1] = ((sprite_address >> 16) & 0xffff); //0x0002;
+		COPPERL[(SPR0 + i) * 4 + 1] = ((sprite_address >> 16) & 0xffff);
 		COPPERL[(SPR0 + i) * 4 + 3] = (sprite_address & 0xffff) + SPRITE_SIZE * i;
 	}
 }
@@ -605,6 +770,31 @@ void vsync(void)
 	WaitTOF();
 }
 
+void cls_blitter(void) {
+	// 1. 進行中のBlitter処理が完了するのを待つ
+	WaitBlit();
+
+	// 2. 塗りつぶし（ゼロクリア）用の制御レジスタ設定
+	// BLTCON0: Aソース無効、デスティネーション有効、ミンターム 0 (すべてゼロ)
+	Custom.bltcon0 = 0x0100; // デスティネーションのみ、ミンターム0 (ゼロフィル)
+	Custom.bltcon1 = 0x0000;
+
+	// すべてのプレーンにわたる連続的なブロック書き込みのためモジュロは0
+	Custom.bltamod = 0;
+	Custom.bltdmod = 0;
+
+	// 3. デスティネーションポインタをビットプレーンの先頭に設定
+	unsigned char *dest_addr = (unsigned char *)bitplane_address;
+	Custom.bltdpt = (APTR)(dest_addr);
+
+	// 4. BLTSIZE: 高さ（行数）と幅（1行あたりの16ビットワード数）
+	// 320x200画面、4ビットプレーンの場合:
+	// 総高さ = 200ライン * 4ビットプレーン = 800行
+	// 幅 = 320ピクセル / 16 = 20ワード (1行あたり40バイト)
+//	Custom.bltsize = ((SCREEN_HEIGHT * BITPLANE_NUM) & 0x3FF) | ((SCREEN_WIDTH / 16) << 10);
+	Custom.bltsize = ((SCREEN_HEIGHT * BITPLANE_NUM) << 6) | ((SCREEN_WIDTH / 16));
+}
+/*
 void cls2(void)
 {
 	long i;
@@ -618,12 +808,14 @@ void cls2(void)
 		*((unsigned long *)(unsigned char *)(bitplane_address + i + BITPLANE_SIZE * 2)) = 0; //xffffffffL;
 		*((unsigned long *)(unsigned char *)(bitplane_address + i + BITPLANE_SIZE * 3)) = 0x0; //ffffffffL;
 	}while((i-=4) >= 0);
-}
+}*/
 
 void cls(void) {
-	int i,j;
+//	int i,j;
 
-	cls2();
+	cls_blitter();
+
+//	cls2();
 //	for(j = 0l; j < 24; j++)
 //		for(i = 0; i < 40; ++i)
 //			put_chr8(i, j, ' ');
@@ -649,7 +841,7 @@ void play_sound_effect(void) {
 //	beep();  // シンプルなビープ音
 }
 
-void put_chr16(short x, short y, char chr)
+void put_chr16_(short x, short y, char chr)
 {
 	ULONG vram_adr;
 	x += (32/16);
@@ -663,10 +855,88 @@ void put_chr16(short x, short y, char chr)
 				(x + k) + (y + j) * (SCREEN_WIDTH / 8) + (ULONG)bitplane_address;
 			for(int i = 0; i < BITPLANE_NUM; ++i){
 				*((unsigned char *)(vram_adr + BITPLANE_SIZE * i)) = 
-					bg_buffer[i][j][(128 / 8)*0 + chr*2+k];
+					(bg_buffer[i][j][chr*2+k]);// + ( j*SCREEN_WIDTH/8+16*3*0) + (chr*2+k));
 			}
 		}
 	}
+}
+
+void put_chr16__(short x, short y, char chr) {
+	// 画面上のバイト単位のX座標、Yライン位置
+	int dest_x = (x + (32 / 16)) * 2;
+	int dest_y = y * 16;
+
+	for (int i = 0; i < BITPLANE_NUM; ++i) {
+		WaitBlit();
+
+		// ソース: bg_buffer のプレーンiにおける、0行目の「chr番目のキャラクターのX位置」を指す
+		unsigned char *src = &bg_buffer[i][0][chr * 2];
+
+		// デスティネーション: VRAMの該当プレーン位置
+		unsigned char *dest = (unsigned char *)bitplane_address 
+								+ (BITPLANE_SIZE * i) 
+								+ dest_x + dest_y * (SCREEN_WIDTH / 8);
+
+		// マスク設定
+		Custom.bltafwm = 0xFFFF; // First Word Mask
+		Custom.bltalwm = 0xFFFF; // Last Word Mas
+
+		// レジスタ設定
+		Custom.bltcon0 = 0x09f0; //0x0FCA; // A→D コピー (Minterm: ABC)
+		Custom.bltcon1 = 0x0000;
+
+		// ★超重要：モジュロ（行末から次の行へジャンプするバイト数）の設定
+		// タイルシート全体の1行の幅（40バイト）から、描画する幅（2バイト）を引いた値
+		Custom.bltamod = (SCREEN_WIDTH / 8) - 2; // 40 - 2 = 38
+
+		// デスティネーション側の1行の幅からも、描画幅(2バイト)を引く
+		Custom.bltdmod = (SCREEN_WIDTH / 8) - 2; // 40 - 2 = 38
+
+		Custom.bltapt = (APTR)src;
+		Custom.bltdpt = (APTR)dest;
+
+		// 高さ16ライン、幅1ワード（16ピクセル = 2バイト）
+		// (高さ << 6) | 幅ワード数
+		Custom.bltsize = (16 << 6) | 1;
+	}
+}
+
+void put_chr16(short x, short y, char chr) {
+	// 1回のBlitで4プレーン分を同時に処理するため、プレーンのforループは消滅します！
+	WaitBlit();
+
+	// 画面上のバイト単位のX座標、Yライン位置
+	// インターブリーフでは1行あたり全プレーン分のデータ（40バイト × 4 = 160バイト）が並ぶ
+	int row_bytes = (SCREEN_WIDTH / 8) * BITPLANE_NUM; // 320/8 * 4 = 160バイト
+	
+	int dest_x = (x + (32 / 16)) * 2;// * BITPLANE_NUM; // 4プレーン分を考慮したオフセット
+	int dest_y = y * 16;// * row_bytes;
+
+	// ソース（タイルバッファもインターブリーフ化されている前提）
+	// 1キャラクターの幅は 2バイト × 4プレーン = 8バイト
+	unsigned char *src = &bg_buffer[0][0][0] + (chr*2); // * row_bytes); //BITPLANE_NUM);
+
+	// デスティネーション（VRAMの該当位置）
+	unsigned char *dest = (unsigned char *)bitplane_address 
+						  + dest_x + dest_y * row_bytes;
+
+	// レジスタ設定
+	Custom.bltafwm = 0xFFFF;
+	Custom.bltalwm = 0xFFFF;
+	Custom.bltcon0 = 0x09F0; // A → D コピー
+	Custom.bltcon1 = 0x0000;
+
+	// ★超重要：インターブリーフ時のモジュロ設定
+	// 画面全体の1行の幅（160バイト）から、描画する幅（8バイト = 4ワード）を引く
+	Custom.bltamod = (SCREEN_WIDTH / 8) - (8/8)*2;//(2 * BITPLANE_NUM); // 160 - 8 = 152
+	Custom.bltdmod = (SCREEN_WIDTH / 8) - (8/8)*2;//(2 * BITPLANE_NUM); // 160 - 8 = 152
+
+	Custom.bltapt = (APTR)src;
+	Custom.bltdpt = (APTR)dest;
+
+	// ★ここが最大の魔法：
+	// 高さ 16ライン、幅 4ワード（プレーン0?3の計4ワード分を1行として同時に扱う）
+	Custom.bltsize = ((16 * BITPLANE_NUM) << 6) | (8/8);
 }
 
 unsigned char keyscan2(unsigned char keycode);
@@ -741,7 +1011,6 @@ int main(void)
 		return 10;
 	}
 
-
 	struct Library *LowLevelBase = OpenLibrary("lowlevel.library", 39L);
 	if (!LowLevelBase) {
 //		printf("cannot open lowlevel.library\n");
@@ -754,13 +1023,17 @@ int main(void)
 
 	/* 画面設定 */
 	Custom.bplcon0 = 0x4200;
-	Custom.bpl1mod = 0x0000; //MOVE.W  #$0000,BPL1MOD(a0) ;Modulo = 0
-	Custom.bplcon1 = 0x0000; //MOVE.W  #$0000,BPLCON1(a0) ;Horizontal scroll value = 0
+	
+	// ★インターブリーフ用モジュロ設定
+	// 1行進む間にスキップするバイト数 = (プレーン数 - 1) × 1行のバイト数
+	// (4 - 1) * 40 = 120バイト (0x0078)
+	Custom.bpl1mod = 0x0078; // 奇数プレーン用モジュロ
+	Custom.bpl2mod = 0x0078; // 偶数プレーン用モジュロ
 
-	Custom.bplcon2 = 0x0024; //	MOVE.W  #$0024,BPLCON2(a0) ;Sprites have priority over playfields
-	Custom.ddfstrt = 0x0038; //	MOVE.W  #$0038,DDFSTRT(a0) ;Set data-fetch start
-	Custom.ddfstop = 0x00d0; //	MOVE.W  #$00D0,DDFSTOP(a0) ;Set data-fetch stop
-
+	Custom.bplcon1 = 0x0000;
+	Custom.bplcon2 = 0x0024;
+	Custom.ddfstrt = 0x0038;
+	Custom.ddfstop = 0x00d0;
 	Custom.diwstrt = 0x2c81;
 	Custom.diwstop = 0xf4c1;
 
@@ -814,8 +1087,9 @@ int main(void)
 
 	Custom.dmacon = DMAF_SETCLR | DMAF_SPRITE;
 
-	cls2();
+	cls_blitter();
 
+//	sc5_load("ds1_8bit.sc5", 0, 0, 16*3, (ULONG)&bg_buffer[0], (SCREEN_WIDTH / 8 * 16 * 3));
 
 	sc5_load("ds1_8bit.sc5", 0, 0, 16*3, (ULONG)&bg_buffer[0][0][0], (SCREEN_WIDTH / 8 * 16 * 3));
 	sc5_load("FONTYOKO.SC5", 0, 0, 8*4, (ULONG)&font_buffer[0][0][0], (SCREEN_WIDTH / 8 * 8 * 4));
@@ -849,7 +1123,7 @@ int main(void)
 #include <proto/exec.h>
 #include <proto/intuition.h>
 
-#include <stdio.h>
+//#include <stdio.h>
 
 /* Amigaの主要なキーコード (Raw Key Code) の定義 */
 #define RAWKEY_UP	 0x4C
