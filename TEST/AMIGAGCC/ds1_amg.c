@@ -822,21 +822,6 @@ int main(void)
 
 //	raw_load("se1.raw", rawbuffer, rawsize);
 
-
-	ULONG vram_adr;
-	int x = 0,y = 18 * 8;
-	for(int k = 0; k < SCREEN_WIDTH / 8; k+=2){
-		for(int j = 0; j < 1; j+=2){
-			put_chr16(x + k, y + j, 0);
-/*		for(int j = 0; j < 16; ++j){
-			vram_adr = (x + k) + (y + j) * (SCREEN_WIDTH / 8) + (ULONG)bitplane_address;
-			for(i = 0; i < BITPLANE_NUM; ++i){
-				*((unsigned char *)(vram_adr + BITPLANE_SIZE * i)) = 
-					bg_buffer[i][j][128 / 8];
-			}
-*/		}
-	}
-
 	keywindowopen();
 
 #ifdef DEBUG2
