@@ -251,20 +251,6 @@ unsigned short SPRITE3[] = {
 };
 
 
-// max/min マクロ
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-
-
-// 構造体
-typedef struct {
-	int x, y;
-	int active;
-} Entity;
-
-int score = 0, hiscore = 5000;
-int combo = 0;
-
 unsigned char org_pal[16][3] = {
 	{  0,  0,  0},
 	{  0,  0,  0},
@@ -698,66 +684,6 @@ void play_sound_effect(void) {
 //	beep();  // シンプルなビープ音
 }
 
-void put_chr16_(short x, short y, char chr)
-{
-	ULONG vram_adr;
-	x += (32/16);
-
-	x*=2;
-	y*=16;
-
-	for(short k = 0; k < 2; ++k){
-		for(short j = 0; j < 16; ++j){
-			vram_adr =// (short unsigned int *)
-				(x + k) + (y + j) * (SCREEN_WIDTH / 8) + (ULONG)bitplane_address;
-			for(int i = 0; i < BITPLANE_NUM; ++i){
-				*((unsigned char *)(vram_adr + BITPLANE_SIZE * i)) = 
-					(bg_buffer[i][j][chr*2+k]);// + ( j*SCREEN_WIDTH/8+16*3*0) + (chr*2+k));
-			}
-		}
-	}
-}
-
-void put_chr16__(short x, short y, char chr) {
-	// 画面上のバイト単位のX座標、Yライン位置
-	int dest_x = (x + (32 / 16)) * 2;
-	int dest_y = y * 16;
-
-	for (int i = 0; i < BITPLANE_NUM; ++i) {
-		WaitBlit();
-
-		// ソース: bg_buffer のプレーンiにおける、0行目の「chr番目のキャラクターのX位置」を指す
-		unsigned char *src = &bg_buffer[i][0][chr * 2];
-
-		// デスティネーション: VRAMの該当プレーン位置
-		unsigned char *dest = (unsigned char *)bitplane_address 
-								+ (BITPLANE_SIZE * i) 
-								+ dest_x + dest_y * (SCREEN_WIDTH / 8);
-
-		// マスク設定
-		Custom.bltafwm = 0xFFFF; // First Word Mask
-		Custom.bltalwm = 0xFFFF; // Last Word Mas
-
-		// レジスタ設定
-		Custom.bltcon0 = 0x09f0; //0x0FCA; // A→D コピー (Minterm: ABC)
-		Custom.bltcon1 = 0x0000;
-
-		// ★超重要：モジュロ（行末から次の行へジャンプするバイト数）の設定
-		// タイルシート全体の1行の幅（40バイト）から、描画する幅（2バイト）を引いた値
-		Custom.bltamod = (SCREEN_WIDTH / 8) - 2; // 40 - 2 = 38
-
-		// デスティネーション側の1行の幅からも、描画幅(2バイト)を引く
-		Custom.bltdmod = (SCREEN_WIDTH / 8) - 2; // 40 - 2 = 38
-
-		Custom.bltapt = (APTR)src;
-		Custom.bltdpt = (APTR)dest;
-
-		// 高さ16ライン、幅1ワード（16ピクセル = 2バイト）
-		// (高さ << 6) | 幅ワード数
-		Custom.bltsize = (16 << 6) | 1;
-	}
-}
-
 void put_chr16(short x, short y, char chr) {
 	// 1回のBlitで4プレーン分を同時に処理するため、プレーンのforループは消滅します！
 	WaitBlit();
@@ -875,6 +801,9 @@ int main(void)
 	}
 
 	/* 一時停止 */
+//	Custom.dmacon = 0x01ff; // Bit 0?8のDMAをすべてクリア（オフ）
+//	Custom.intena = 0x7fff; // 全ての割り込みを無効化
+
 	Custom.dmacon = 0x8120;
 	Custom.intena = 0x8000;
 
