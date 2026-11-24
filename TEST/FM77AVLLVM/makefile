@@ -1,7 +1,7 @@
 ﻿# --- 設定 ---
 TARGET  = ds1
 
-BINPATH=/home/user/mc6809-toolchain-1.0-rc2-linux-x86_64/bin/
+BINPATH=/home/user/mc6809-toolchain-1.1.0-rc1-linux-x86_64/bin/
 
 CC      = $(BINPATH)mc6809-clang
 AS      = $(BINPATH)mc6809-clang
@@ -9,7 +9,7 @@ LD      = $(BINPATH)mc6809-ld
 OBJCOPY = $(BINPATH)llvm-objcopy
 
 CFLAGS  = -Os -c -fno-builtin-memcpy
-LIBPATH=/home/user/mc6809-toolchain-1.0-rc2-linux-x86_64/lib/clang/24/lib/mc6809-unknown-unknown
+LIBPATH=/home/user/mc6809-toolchain-1.1.0-rc1-linux-x86_64/lib/clang/24/lib/mc6809-unknown-unknown
 
 # 生成される中間ファイルなどをまとめて定義
 OBJFILES = crt0.rel $(TARGET).rel

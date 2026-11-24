@@ -10,6 +10,9 @@
 #define A_KEY "Z"
 #define B_KEY "X"
 
+#define disable() __asm__ volatile("orcc	#0x10\n");
+#define enable() __asm__ volatile("andcc	#0xef\n");
+
 void abort(void)
 {
 	for(;;);
@@ -28,16 +31,6 @@ void abort(void)
 	NUMERIC &= ~BITDATA(BITNUM);	\
 }
 #define PAGE 0xa
-/*
-#define VRAM_DATA_ADR (PAGE * 0x1000)
-#define MAP_ADR VRAM_DATA_ADR
-#define PARTS_DATA (MAP_ADR+0x3c00)
-#define MASK_DATA_ADR 0x1600
-#define MAPPAT_ADR 0x2000
-#define CHRPAT_ADR 0x4000
-
-#define SUBPAT_ADR 0xa500*/
-//#define SUBPAT_ADR2 0xd500
 
 #define SIZE 80
 
@@ -46,23 +39,8 @@ void abort(void)
 
 #define PARTS_X 2
 #define PARTS_Y 8
-/*
-#define MAP_SIZE_X 128
-#define MAP_SIZE_Y 128
 
-#define OFS_X 2
-#define OFS_Y 2
-
-#define CHR_X 8
-#define CHR_Y 8
-
-unsigned char vram_tmp[PARTS_X * PARTS_Y * 3];
-unsigned char map_data[(X_SIZE+2) * 32];
-*/
-unsigned char *subram_table[15];
-
-//unsigned char no;
-unsigned char *vram_adr;
+volatile unsigned short vram_adr;
 
 unsigned char i, j;
 
@@ -76,27 +54,12 @@ unsigned char i, j;
 #define opncom ((volatile unsigned char *)OPNCOM)
 #define opndat ((volatile unsigned char *)OPNDAT)
 
-unsigned char msr_sv;
-unsigned char key, st3 = 0;
-
-/*void dummy(void)
-{
-asm volatile(
-"__rs0:\n"
-"__rs1:\n"
-"__rs0lo:\n"
-"__rs0hi:\n"
-"__rs1lo:\n"
-"__rs1hi:\n"
-"__mulhi3:\n"
-"__divhi3:\n"
-"rts\n"
-);
-}*/
+volatile unsigned char msr_sv;
+volatile unsigned char key, st3 = 0;
 
 __attribute__((noinline)) void keyscan_on(void)
 {
-asm volatile(
+__asm__ volatile(
 	"jmp	_SCAN\n"
 "_SUBOUT:\n"
 	".byte	16\n"
@@ -118,7 +81,7 @@ asm volatile(
 
 void keyscan_off(void)
 {
-asm volatile(
+__asm__ volatile(
 	"ldx	#_SUBOUT2\n"
 	"jsr [0xFBFA]\n"
 	"lda #0\n"
@@ -146,7 +109,7 @@ asm volatile(
 
 void keyrepeat_on(void)
 {
-asm volatile(
+__asm__ volatile(
 	"jmp	_repeat\n"
 "_SUBOUT3:\n"
 	".byte	16\n"
@@ -168,7 +131,7 @@ asm volatile(
 
 __attribute__((noinline)) void keyrepeat_off(void)
 {
-asm volatile(
+__asm__ volatile(
 	"jmp	_repeat2\n"
 "_SUBOUT4:\n"
 	".byte	16\n"
@@ -189,9 +152,9 @@ asm volatile(
 }
 
 
-unsigned char keycode2, keyflag;
+volatile unsigned char keycode2, keyflag;
 
-void  key_sense(void)
+void key_sense(void)
 {
 //		for(;;);
 //	unsigned char keycode2 = 0, old_keycode = 0;
@@ -233,7 +196,7 @@ void  key_sense(void)
 
 __attribute__((noinline)) void set_key_irq(void)
 {
-asm volatile(
+__asm__ volatile(
 
 "_TINIT:\n"
 	"orcc	#0x10\n"
@@ -254,9 +217,9 @@ asm volatile(
 );
 }
 
-void reset_key_irq(void)
+__attribute__((noinline)) void reset_key_irq(void)
 {
-asm volatile(
+__asm__ volatile(
 	"orcc	#0x10\n"
 	"ldx		_IRQJP\n"
 	"stx		0xFFF8\n"
@@ -286,9 +249,9 @@ asm volatile(
 
 }
 
-__attribute__((noinline)) void sub_disable1(void)
+__attribute__((noinline)) void sub_halt(void)
 {
-asm volatile(
+__asm__ volatile(
 "_SUBHLT:\n"
 	"lda	0xFD05\n"
 	"bmi	_SUBHLT\n"
@@ -301,12 +264,12 @@ asm volatile(
 );
 }
 
-void sub_disable(void)
+__attribute__((noinline)) void sub_disable(void)
 {
-	sub_disable1();
+	sub_halt();
 
 //	msr_sv = *msr;
-asm volatile(
+__asm__ volatile(
 	"lda	0xfd93\n"
 	"sta	msr_sv\n"
 	"ora	#0x80\n"
@@ -317,22 +280,10 @@ asm volatile(
 
 void sub_disable2(void)
 {
-	sub_disable1();
-
-/*asm volatile(
-"_SUBHLT:\n"
-	"lda	0xFD05\n"
-	"bmi	_SUBHLT\n"
-	"orcc	#(0x50)\n"
-	"lda	#0x80\n"
-	"sta	0xFD05\n"
-"_LOOP:\n"
-	"lda	0xFD05\n"
-	"bpl	_LOOP\n" // *-3\n"
-);*/
+	sub_halt();
 
 //	msr_sv = *msr;
-asm volatile(
+__asm__ volatile(
 	"lda	0xfd93\n"
 	"sta	msr_sv\n"
 	"anda	#0x7f\n"
@@ -341,11 +292,11 @@ asm volatile(
 //	*msr |= 0x80;
 }
 
-void sub_enable(void)
+__attribute__((noinline)) void sub_enable(void)
 {
 //	*msr = msr_sv;
 
-asm volatile(
+__asm__ volatile(
 	"lda	msr_sv\n"
 	"sta	0xfd93\n"
 
@@ -360,7 +311,7 @@ asm volatile(
 
 void bank1_on()
 {
-asm volatile(
+__asm__ volatile(
 	"lda	#0x1d\n"
 	"sta	0xfd8a\n"
 	"lda	#0\n"
@@ -375,7 +326,7 @@ asm volatile(
 
 void bank1_off(void)
 {
-asm volatile(
+__asm__ volatile(
 	"lda	#0x1d\n"
 	"sta	0xfd8a\n"
 	"lda	#0\n"
@@ -389,7 +340,7 @@ asm volatile(
 
 void vram_b_on(void)
 {
-asm volatile(
+__asm__ volatile(
 	"lda	#0x10\n"
 	"sta	0xfd8a\n"
 	"inca	\n"
@@ -407,7 +358,7 @@ asm volatile(
 
 void vram_r_on(void)
 {
-asm volatile(
+__asm__ volatile(
 	"lda	#0x14\n"
 	"sta	0xfd8a\n"
 	"inca	\n"
@@ -425,7 +376,7 @@ asm volatile(
 
 void vram_g_on(void)
 {
-asm volatile(
+__asm__ volatile(
 	"lda	#0x18\n"
 	"sta	0xfd8a\n"
 	"inca	\n"
@@ -443,7 +394,7 @@ asm volatile(
 
 void vram_off(void)
 {
-asm volatile(
+__asm__ volatile(
 	"lda	#0x3a\n"
 	"sta	0xfd8a\n"
 	"inca	\n"
@@ -484,59 +435,11 @@ unsigned char read_opn(unsigned char reg)
 	return data;
 }
 
-//unsigned char *adr_tmp, *adr_tmp3;
-//unsigned short *adr_tmp2;
-unsigned char ii, jj;
+volatile unsigned char subcpu_flag = 0;
 
-unsigned char subcpu_flag = 0;
-
-__attribute__((noinline)) void sub_draw(void)
+void testcd(void)
 {
-asm volatile(
-	"lda	#0x3f\n"
-	"sta	0xfc82\n"
-	"lda	subcpu_flag\n"
-	"bne	_SKIP1\n"
-	"lda	#1\n"
-	"sta	subcpu_flag\n"
-	"jsr	_MOVCMD\n"
-"_SKIP1:\n"
-	"jsr	_SUBMOV\n"
-	"bra	_ENDCD\n"
-
-"_SUBHLT1:\n"
-	"lda	0xfd05\n"
-	"bmi	_SUBHLT1\n"
-	"orcc	#0x50\n"
-	"lda	#0x80\n"
-	"sta	0xfd05\n"
-"_SUBHLT2:\n"
-	"lda	0xfd05\n"
-	"bpl	_SUBHLT2\n"
-	"rts\n"
-
-"_RDYREQ:\n"
-	"lda	0xfc80\n"
-	"ora	#0x80\n"
-	"sta	0xfc80\n"
-	"rts\n"
-
-"_SUBMOV:\n"
-	"clra\n"
-	"sta	0xfd05\n"
-	"andcc	#0xaf\n"
-	"rts\n"
-
-"_MOVCMD:\n"
-	"ldx	#_TESTCD\n"
-	"ldy	#0xfc82\n"
-"_LOOP1:\n"
-	"lda	,X+\n"
-	"sta	,Y+\n"
-	"cmpx	#_ENDCD\n"
-	"bne	_LOOP1\n"
-	"rts\n"
-
+__asm__ volatile(
 "_TESTCD:\n"
 	".byte	0x3f\n"
 	".space	8\n"
@@ -546,6 +449,8 @@ asm volatile(
 
 	"ldu	0xd3f8\n"
 	"ldx	0xd3fa\n" //#0xd3c8\n"
+//	"ldx	#0xd3c8\n"
+
 //	"lda	#8\n"
 //	"sta	0xd3fa\n"
 	"ldy	#8\n"
@@ -559,8 +464,9 @@ asm volatile(
 	"std 0x4000,u\n"
 	"lda 2,x\n"
 	"ldb 5,x\n"
-	";std 0x8000,u\n"
-	".byte 0xed,0xc9,0x80,0x00\n"
+//	"std 0x8000,u\n"
+	"std -0x8000,u\n"
+//	".byte 0xed,0xc9,0x80,0x00\n"
 	"leax 6,x\n"
 	"leau 80,u\n"
 
@@ -571,35 +477,73 @@ asm volatile(
 	"rts\n"
 
 "_ENDCD:\n"
-//";	equ	*\n"
-		:	/* 値が返るレジスタ変数 */
-		:	/* 引数として使われるレジスタ変数 */
-		:"u"	/* 破壊されるレジスタ */
 );
 }
 
+
+void submov(void)
+{
+__asm__ volatile(
+	"clra\n"
+	"sta	0xfd05\n"
+	"andcc	#0xaf\n"
+);
+}
+
+void movcmd(void)
+{
+__asm__ volatile(
+	"ldx	#_TESTCD\n"
+	"ldy	#0xfc82\n"
+"1:\n"
+	"lda	,X+\n"
+	"sta	,Y+\n"
+	"cmpx	#_ENDCD\n"
+	"bne	1b\n"
+	:	/* 値が返るレジスタ変数 */
+	:	/* 引数として使われるレジスタ変数 */
+	:"a","x","y","memory"	/* 破壊されるレジスタ */
+);
+}
+
+__attribute__((optnone))  void sub_draw(void)
+{
+__asm__ volatile(
+	"lda	#0x3f\n"
+	"sta	0xfc82\n"
+	"lda	subcpu_flag\n"
+	"bne	1f\n"
+	"lda	#1\n"
+	"sta	subcpu_flag\n"
+);
+	movcmd();
+
+__asm__ volatile(
+"1:\n"
+);
+	submov();
+}
+
 /* メインRAM->VRAM 3プレーン転送(SUB CPU) */
-__attribute__((noinline)) void put_sub2(char *patadr)
+//__attribute__((noinline)) __attribute__((optnone)) 
+void put_sub2(char *patadr)
 {
 	register unsigned char *rx asm ("x");
 
-asm volatile(
-	"jsr	_SUBHLT1\n"
-);
+	sub_halt();
 
 //	adr_tmp
 ///	rx = (unsigned char *)MAPPAT_ADR + patadr * 2 + patadr; 
 	rx = (unsigned char *)(patadr); //0 + patadr * 2 + patadr); 
 //	adr_tmp2 = (unsigned short *)(vram_adr);
 
-
-asm volatile(
+__asm__ volatile(
 //	"ldx	_adr_tmp\n"
 //	"ldx	_adr_tmp\n"
-	"pshs	U\n"
+//	"pshs	u\n"
 	"ldy	#0xfcc8\n"
 	"lda	#8\n"
-"_LOOP00:\n"
+"1:\n"
 	"ldu	,X\n"
 	"stu	,Y++\n"
 	"ldu	2,X\n"
@@ -607,74 +551,41 @@ asm volatile(
 	"ldu	4,X\n"
 	"stu	,Y++\n"
 
-	"leax 96,x\n"
-//	"leay 6,y\n"
+	"leax	96,x\n"
+//	"leay	6,y\n"
 
 //	"cmpy	#0xfcc8+48\n"
 	"deca\n"
-	"bne	_LOOP00\n"
+	"bne	1b\n"
 
 //	"ldd	_adr_tmp2\n"
 	"ldd	vram_adr\n"
 	"std	0xfcf8\n"
 	"ldd	#0xd3c8\n"
 	"std	0xfcfa\n"
-	"puls	U\n"
+//	"puls	u\n"
 
-		:	/* 値が返るレジスタ変数 */
-		:"r"(rx)	/* 引数として使われるレジスタ変数 */
-		:"y","d","u"	/* 破壊されるレジスタ */
+	:	/* 値が返るレジスタ変数 */
+	:"r"(rx)	/* 引数として使われるレジスタ変数 */
+	:"y","d","u","memory"	/* 破壊されるレジスタ */
 );
 	sub_draw();
 }
 
 
-__attribute__((noinline)) void cursor_off(void)
+
+void submovec(void)
 {
-asm volatile(
-	"jsr	_SUBHLTC1\n"
-
-	"lda	#0x3f\n"
-	"sta	0xfc82\n"
-	"lda	#0x00\n"
-	"sta	subcpu_flag\n"
-	"jsr	_MOVCMDC\n"
-	"jsr	_SUBMOVEC\n"
-	"bra	_ENDCDC\n"
-
-"_SUBHLTC1:\n"
-	"lda	0xfd05\n"
-	"bmi	_SUBHLTC1\n"
-	"orcc	#0x50\n"
-	"lda	#0x80\n"
-	"sta	0xfd05\n"
-"_SUBHLTC2:\n"
-	"lda	0xfd05\n"
-	"bpl	_SUBHLTC2\n"
-	"rts\n"
-
-"_RDYREQC:\n"
-	"lda	0xfc80\n"
-	"ora	#0x80\n"
-	"sta	0xfc80\n"
-	"rts\n"
-
-"_SUBMOVEC:\n"
+__asm__ volatile(
 	"clra\n"
 	"sta	0xfd05\n"
 	"andcc	#0xaf\n"
-	"rts\n"
+);
+}
 
-"_MOVCMDC:\n"
-	"ldx	#_TESTCDC\n"
-	"ldy	#0xfc82\n"
-"_LOOPC1:\n"
-	"lda	,X+\n"
-	"sta	,Y+\n"
-	"cmpx	#_ENDCDC\n"
-	"bne	_LOOPC1\n"
-	"rts\n"
-
+void testcdc(void)
+{
+__asm__ volatile(
 "_TESTCDC:\n"
 	".byte	0x3f\n"
 	".space	8\n"
@@ -690,9 +601,39 @@ asm volatile(
 );
 }
 
+void movecmdc(void)
+{
+__asm__ volatile(
+
+	"ldx	#_TESTCDC\n"
+	"ldy	#0xfc82\n"
+"1:\n"
+	"lda	,X+\n"
+	"sta	,Y+\n"
+	"cmpx	#_ENDCDC\n"
+	"bne	1b\n"
+	:	/* 値が返るレジスタ変数 */
+	:	/* 引数として使われるレジスタ変数 */
+	:"a","x","y","memory"	/* 破壊されるレジスタ */
+);
+}
+
+__attribute__((noinline)) void cursor_off(void)
+{
+	sub_halt();
+__asm__ volatile(
+	"lda	#0x3f\n"
+	"sta	0xfc82\n"
+	"lda	#0x00\n"
+	"sta	subcpu_flag\n"
+);
+	movecmdc();
+	submovec();
+}
+
 __attribute__((noinline)) void get_key(void)
 {
-asm volatile(
+__asm__ volatile(
 	"bra	keyg\n"
 "keyin:\n"
 	".byte	21\n"
@@ -726,20 +667,10 @@ void key_clear(void)
 			break;
 	}
 }
-/*
-unsigned char data_no, *data, *data_tmp;
 
-unsigned char *vram_adr_tmp;
-unsigned short old_x = 255, old_y = 255;
-unsigned short x = 165, y = 30;
-unsigned char old_map_data[(X_SIZE + 2) * 32];
-*/
-unsigned char k0, k1, k2, k3, st, st2 = 0;
+volatile unsigned char k0, k1, k2, k3, st, st2 = 0;
 
-//unsigned short xx, yy;
-//unsigned char k;
-
-unsigned char sub_flag;
+volatile unsigned char sub_flag;
 
 enum {
 	TILE_WALL,   // 壁
@@ -758,12 +689,12 @@ void beep(void)
 {
 }
 
-void put_chr8(int x, int y, char chr, char atr) {
+__attribute__((noinline)) __attribute__((optnone)) void put_chr8(int x, int y, char chr, char atr) {
 	if((x < 0) || (y < 0))
 		return;
 	x += (32/8)*2;
 
-	vram_adr = (unsigned char *)(x + y * 80 * 8);
+	vram_adr = x + y * 80 * 8;
 	put_sub2((char *)(ds1_grp + ((chr & 0x0f) * 2 + (chr & 0xf0) * 16)  * 3));
 
 }
@@ -777,10 +708,10 @@ void put_chr16(int x, int y, char chr) {
 
 }
 
-char chr;
+volatile char chr;
 
 // VRAM直書き
-void print_at(char x, char y, char *str) {
+__attribute__((noinline)) __attribute__((optnone)) void print_at(char x, char y, char *str) {
 	x += (32/8);
 
 	while ((chr = *(str++)) != '\0') {
@@ -792,12 +723,13 @@ void print_at(char x, char y, char *str) {
 		else
 			chr = 0x10;
 
-		vram_adr = (unsigned char *)((x++) * 2 + y * 80 * 8);
+		vram_adr = (x * 2 + y * 80 * 8);
+		++x;
 		put_sub2((char *)(font_grp + ((chr & 0x0f) * 2 + (chr & 0xf0) * 16)  * 3));
 	}
 }
 
-void print_at_2(char x, char y, char *str) {
+__attribute__((noinline)) __attribute__((optnone)) void print_at_2(char x, char y, char *str) {
 	x += (32/8);
 
 	while ((chr = *(str++)) != '\0') {
@@ -807,7 +739,8 @@ void print_at_2(char x, char y, char *str) {
 		else
 			chr = 0x10;
 
-		vram_adr = (unsigned char *)((x++) * 2 + y * 80 * 8);
+		vram_adr = (x * 2 + y * 80 * 8);
+		++x;
 		put_sub2((char *)(font_grp + ((chr & 0x0f) * 2 + (chr & 0xf0) * 16)  * 3));
 	}
 }
@@ -845,7 +778,7 @@ void cls(void) {
 //	return;
 
 	sub_disable2();
-asm volatile(
+__asm__ volatile(
 	"LDA	#0x02	; CLSコマンド ($02)\n"
 	"STA	0xFC82	; コマンド設定エリア\n"
 );
@@ -871,16 +804,12 @@ unsigned char keycode = 0;
 unsigned char keyscan(void)
 {
 	keycode = 0;
-		/* ジョイスティック読み込み */
-asm volatile(
-	"orcc	#0x10\n"
-);
+	/* ジョイスティック読み込み */
+	disable();
 	write_opn(15, 0x2f);
 	st = ~read_opn(14);
 	st2 = st3;
-asm volatile(
-	"andcc	#0xef\n"
-);
+	enable();
 	st2 = st3;
 
 	if((st & 0x01) || (st2 & 0x01)){ /* U */
@@ -909,9 +838,7 @@ asm volatile(
 
 void set_se(void)
 {
-asm volatile(
-	"orcc	#0x10\n"
-);
+	disable();
 	write_opn(6,127);
 	write_opn(11,0);
 	write_opn(12,15);
@@ -921,14 +848,12 @@ asm volatile(
 	 // 00011100(8ch) PC-88/X1の場合 10011100(9ch) MSX/FM77AVの場合
 	write_opn(13,9);
 	write_opn(10,0x10);
-asm volatile(
-	"andcc	#0xef\n"
-);
+	enable();
 }
 
 int main(void)
 {
-/*asm volatile(
+/*__asm__ volatile(
 	"LDS  #0x7FFF    ; ハードウェアスタックを$7FFFに設定\n"
 	"LDU  #0x7F00\n"
 	"lda #1\n"
@@ -939,14 +864,10 @@ int main(void)
 	cursor_off();
 
 	/* ジョイスティック設定 */
-asm volatile(
-	"orcc	#0x10\n"
-);
+	disable();
 	write_opn(15, 0x3f);
 	write_opn(7, 0xbf);
-asm volatile(
-	"andcc	#0xef\n"
-);
+	enable();
 
 	st3 = 0;
 	st2 = 0;
