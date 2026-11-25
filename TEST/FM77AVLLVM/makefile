@@ -1,15 +1,15 @@
 ﻿# --- 設定 ---
 TARGET  = ds1
 
-BINPATH=/home/user/mc6809-toolchain-1.1.0-rc1-linux-x86_64/bin/
+BINPATH=C:/WINAP/mc6809-toolchain-1.1.0-rc2-windows-x86_64/bin
 
-CC      = $(BINPATH)mc6809-clang
-AS      = $(BINPATH)mc6809-clang
-LD      = $(BINPATH)mc6809-ld
-OBJCOPY = $(BINPATH)llvm-objcopy
+CC      = $(BINPATH)/mc6809-clang
+AS      = $(BINPATH)/mc6809-clang
+LD      = $(BINPATH)/mc6809-ld
+OBJCOPY = $(BINPATH)/llvm-objcopy
 
 CFLAGS  = -Os -c -fno-builtin-memcpy
-LIBPATH=/home/user/mc6809-toolchain-1.1.0-rc1-linux-x86_64/lib/clang/24/lib/mc6809-unknown-unknown
+LIBPATH=C:/WINAP/mc6809-toolchain-1.1.0-rc2-windows-x86_64/lib/clang/24/lib\mc6809-unknown-unknown/
 
 # 生成される中間ファイルなどをまとめて定義
 OBJFILES = crt0.rel $(TARGET).rel
@@ -26,7 +26,7 @@ all: $(TARGET).d77
 	$(AS) -c -o $@ $<
 
 # 2. ホストPC（gcc）用ビルドのルール
-%: %.c
+%.exe: %.c
 	gcc $< -o $@
 
 # 3. ipl.bin の生成ルール
@@ -36,10 +36,10 @@ ipl.bin: ipl.s
 	$(OBJCOPY) -I elf -O binary ipl.o $@
 
 # 4. メインターゲット
-$(TARGET).d77: $(OBJFILES) ipl.bin create
-	$(LD) -T link.ld  -L$(LIBPATH) -lclang_rt.builtins -o $(TARGET).o $(OBJFILES) -Map=output.map
+$(TARGET).d77: $(OBJFILES) ipl.bin create.exe
+	$(LD) -T link.ld  -L $(LIBPATH) -lclang_rt.builtins -o $(TARGET).o $(OBJFILES) -Map=output.map
 	$(OBJCOPY) -I elf -O binary $(TARGET).o $(TARGET).bin
-	./create $(TARGET).d77 ipl.bin 1 $(TARGET).bin 2
+	./create.exe $(TARGET).d77 ipl.bin 1 $(TARGET).bin 2
 
 # 依存関係
 $(TARGET).rel: $(TARGET).c common.h inkey.h ds1_grp.h font.h
